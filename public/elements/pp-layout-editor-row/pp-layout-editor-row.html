@@ -1,0 +1,214 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/font-roboto/roboto.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/image-icons.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-media-query/iron-media-query.html">
+<dom-module id="pp-layout-editor-row">
+  <template>
+    <style>
+      :host {
+        display: block;
+        font-family: Roboto;
+      }
+
+      #columns {
+        min-height: 100px;
+      }
+
+      .column {
+        border: 1px dashed gray;
+        @apply(--layout-vertical);
+      }
+
+      @media (min-width: 768px) {
+        .column[column-width="1"] {
+          width: calc((100% / 12 * 1) - 2px);
+        }
+
+        .column[column-width="2"] {
+          width: calc((100% / 12 * 2) - 2px);
+        }
+
+        .column[column-width="3"] {
+          width: calc((100% / 12 * 3) - 2px);
+        }
+
+        .column[column-width="4"] {
+          width: calc((100% / 12 * 4) - 2px);
+        }
+
+        .column[column-width="5"] {
+          width: calc((100% / 12 * 5) - 2px);
+        }
+
+        .column[column-width="6"] {
+          width: calc((100% / 12 * 6) - 2px);
+        }
+
+        .column[column-width="7"] {
+          width: calc((100% / 12 * 7) - 2px);
+        }
+
+        .column[column-width="8"] {
+          width: calc((100% / 12 * 8) - 2px);
+        }
+
+        .column[column-width="9"] {
+          width: calc((100% / 12 * 9) - 2px);
+        }
+
+        .column[column-width="10"] {
+          width: calc((100% / 12 * 10) - 2px);
+        }
+
+        .column[column-width="11"] {
+          width: calc((100% / 12 * 11) - 2px);
+        }
+
+        .column[column-width="12"] {
+          width: calc((100% / 12 * 12) - 2px);
+        }
+      }
+
+      .column paper-button {
+        padding: 0;
+        margin: 0;
+        height: 30px;
+        line-height: 30px;
+        border-radius: 0px;
+        min-width: 30px;
+        background: transparent;
+        text-transform: none;
+        opacity: .5;
+      }
+
+      .column paper-button:hover {
+        opacity: 1;
+      }
+
+      .column paper-button iron-icon {
+        pointer-events: none;
+      }
+
+      .column paper-button:nth-child(1):not([disabled]) {
+        background: green;
+        color: white;
+      }
+
+      .column paper-button:nth-child(2):not([disabled]) {
+        background: orange;
+        color: white;
+      }
+
+      .column paper-button:nth-child(3):not([disabled]) {
+        background: red;
+        color: white;
+      }
+    </style>
+    <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
+    <div class="horizontal layout">
+      <paper-dropdown-menu label="Justification" always-float-label noink class="self-center">
+        <paper-listbox class="dropdown-content" attr-for-selected="justification" selected="{{justification}}">
+          <paper-item justification="start-justified">start-justified</paper-item>
+          <paper-item justification="center-justified">center-justified</paper-item>
+          <paper-item justification="end-justified">end-justified</paper-item>
+          <paper-item justification="justified">justified</paper-item>
+          <paper-item justification="around-justified">around-justified</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu>
+      <paper-button icon="add" disabled$="[[_hideIncrease(columns.*)]]" on-tap="add" class="self-center">Add Column</paper-button>
+    </div>
+    <div id="columns" class$="[[_justification(justification, minWidth768px)]]">
+      <template is="dom-repeat" items="[[columns]]" as="column">
+        <div class="column" column-width$="[[column.width]]">
+          <div class="horizontal layout wrap">
+            <paper-button disabled="[[_hideIncrease(index, columns.*)]]" on-tap="_increase" column-index$="[[index]]">
+              <iron-icon icon="image:exposure-plus-1"></iron-icon>
+            </paper-button>
+            <paper-button disabled="[[_hideDecrease(index, columns.*)]]" on-tap="_decrease" column-index$="[[index]]">
+              <iron-icon icon="image:exposure-neg-1"></iron-icon>
+            </paper-button>
+            <paper-button on-tap="_remove" column-index$="[[index]]">
+              <iron-icon icon="delete"></iron-icon>
+            </paper-button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </template>
+  <script>
+    Polymer(
+      {
+        is: 'pp-layout-editor-row',
+        properties: {
+          justification: {
+            type: String,
+            value: 'start-justified'
+          },
+          columns: {
+            type: Array,
+            value: function () {
+              return [];
+            }
+          },
+          minWidth768px: {
+            type: Boolean
+          }
+        },
+        add: function () {
+          if (this._hideIncrease()) return;
+          this.push('columns', {width: 1});
+        },
+        _hideDecrease: function (index) {
+          return this.columns[index] && this.columns[index].width === 1;
+        },
+        _hideIncrease: function () {
+          var width = 0;
+
+          for (var i = 0; i < this.columns.length; i += 1) {
+            width += this.columns[i].width;
+          }
+
+          if (width >= 12) return true;
+          return false;
+        },
+        _decrease: function (event) {
+          try {
+            var index = +Polymer.dom(event).rootTarget.getAttribute('column-index');
+            var column = this.columns[index];
+            if (column && column.width > 1) this.set('columns.' + index + '.width', column.width - 1);
+          } catch (ignore) {}
+        },
+        _increase: function (event) {
+          if (this._hideIncrease()) return;
+
+          try {
+            var index = +Polymer.dom(event).rootTarget.getAttribute('column-index');
+            var column = this.columns[index];
+            if (column) this.set('columns.' + index + '.width', column.width + 1);
+          } catch (ignore) {}
+        },
+        _remove: function (event) {
+          try {
+            var index = +Polymer.dom(event).rootTarget.getAttribute('column-index');
+            var column = this.columns[index];
+            if (column) this.splice('columns', index, 1);
+          } catch (ignore) {}
+        },
+        _justification: function () {
+          if (!this.minWidth768px) return '';
+          return 'layout horizontal ' + this.justification;
+        }
+      }
+    );
+  </script>
+</dom-module>

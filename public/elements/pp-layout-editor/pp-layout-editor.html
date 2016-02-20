@@ -1,0 +1,80 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../pp-layout-editor-row/pp-layout-editor-row.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/font-roboto/roboto.html">
+<dom-module id="pp-layout-editor">
+  <template>
+    <style>
+      :host {
+        display: block;
+        font-family: Roboto;
+      }
+
+      .row {
+        @apply(--layout-horizontal);
+        padding: 8px 0;
+      }
+
+      .row paper-button {
+        padding: 0;
+        margin: 0;
+        border-radius: 0px;
+        min-width: 30px;
+        background: red;
+        opacity: .5;
+        text-transform: none;
+        color: white;
+        @apply(--layout-horizontal);
+        @apply(--layout-center-justified);
+        margin-right: 15px;
+      }
+
+      .row paper-button:hover {
+        opacity: 1;
+      }
+
+      .row paper-button iron-icon {
+        @apply(--layout-self-center);
+        pointer-events: none;
+      }
+    </style>
+    <paper-button on-tap="add">Add Row</paper-button>
+    <template is="dom-repeat" items="[[rows]]" as="row">
+      <div class="row">
+        <paper-button on-tap="_remove" row-index$="[[index]]">
+          <iron-icon icon="delete"></iron-icon>
+        </paper-button>
+        <pp-layout-editor-row columns="{{row.columns}}" class="flex"></pp-layout-editor-row>
+      </div>
+    </template>
+  </template>
+  <script>
+    Polymer(
+      {
+        is: 'pp-layout-editor',
+        properties: {
+          rows: {
+            type: Array,
+            value: function () {
+              return [];
+            }
+          }
+        },
+        add: function () {
+          this.push('rows', {columns: []});
+        },
+        _remove: function (event) {
+          try {
+            var index = +Polymer.dom(event).rootTarget.getAttribute('row-index');
+            var row = this.rows[index];
+            if (row) this.splice('rows', index, 1);
+          } catch (ignore) {}
+        }
+      }
+    );
+  </script>
+</dom-module>
