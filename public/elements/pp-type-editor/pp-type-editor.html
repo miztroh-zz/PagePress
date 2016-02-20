@@ -1,0 +1,120 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="/bower_components/iron-media-query/iron-media-query.html">
+<dom-module id="pp-type-editor">
+	<template>
+		<style>
+			:host {
+				display: block;
+			}
+
+			#rows {
+				margin: 15px 0;
+			}
+
+			#rows .row {
+				min-height: 100px;
+			}
+
+			.column {
+				border: 1px solid white;
+				background: rgba(0, 0, 0, .7);
+			}
+
+			.column:hover {
+				cursor: pointer;
+			}
+
+      @media (min-width: 768px) {
+        .column[column-width="1"] {
+          width: calc((100% / 12 * 1) - 2px);
+        }
+
+        .column[column-width="2"] {
+          width: calc((100% / 12 * 2) - 2px);
+        }
+
+        .column[column-width="3"] {
+          width: calc((100% / 12 * 3) - 2px);
+        }
+
+        .column[column-width="4"] {
+          width: calc((100% / 12 * 4) - 2px);
+        }
+
+        .column[column-width="5"] {
+          width: calc((100% / 12 * 5) - 2px);
+        }
+
+        .column[column-width="6"] {
+          width: calc((100% / 12 * 6) - 2px);
+        }
+
+        .column[column-width="7"] {
+          width: calc((100% / 12 * 7) - 2px);
+        }
+
+        .column[column-width="8"] {
+          width: calc((100% / 12 * 8) - 2px);
+        }
+
+        .column[column-width="9"] {
+          width: calc((100% / 12 * 9) - 2px);
+        }
+
+        .column[column-width="10"] {
+          width: calc((100% / 12 * 10) - 2px);
+        }
+
+        .column[column-width="11"] {
+          width: calc((100% / 12 * 11) - 2px);
+        }
+
+        .column[column-width="12"] {
+          width: calc((100% / 12 * 12) - 2px);
+        }
+      }
+		</style>
+    <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
+		<firebase-collection location="[[url]]" data="{{rows}}"></firebase-collection>
+		<div id="rows">
+			<template is="dom-repeat" items="[[rows]]" as="row">
+				<div class$="row [[_justification(row.justification, minWidth768px)]]">
+					<template is="dom-repeat" items="[[row.columns]]" as="column">
+						<div class="column" column-width$="[[column.width]]"></div>
+					</template>
+				</div>
+			</template>
+		</div>
+	</template>
+	<script>
+		Polymer(
+			{
+				is: 'pp-type-editor',
+				properties: {
+					layout: {
+						type: String
+					},
+					url: {
+						type: String,
+						computed: '_computeUrl(layout)'
+					},
+					rows: {
+						type: Object
+					},
+          minWidth768px: {
+            type: Boolean
+          }
+				},
+				_computeUrl: function () {
+					return this.layout ? 'https://ss16-page-press.firebaseio.com/page-layouts/' + this.layout + '/rows' : '';
+				},
+        _justification: function (justification) {
+          if (!this.minWidth768px) return '';
+          return 'layout horizontal ' + justification;
+        }
+			}
+		);
+	</script>
+</dom-module>

@@ -1,17 +1,147 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/font-roboto/roboto.html">
+<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
+<link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="/bower_components/paper-item/paper-item.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="/elements/pp-type-editor/pp-type-editor.html">
 <dom-module id="pp-page-types">
-	<template>
-		<style>
-			:host {
-				display: block;
+  <template>
+    <style>
+      :host {
+        display: block;
+        font-family: Roboto;
+      }
+
+			#type {
+				margin-top: 15px;
+				padding: 15px;
+				border: 1px solid #ddd;
 			}
-		</style>
-	</template>
-	<script>
-		Polymer(
-			{
-				is: 'pp-page-types'
+
+			paper-dropdown-menu {
+				width: 300px;
 			}
-		);
-	</script>
+    </style>
+		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-types" data="{{types}}"></firebase-collection>
+		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-layouts" data="{{layouts}}"></firebase-collection>
+		<paper-toast id="toast"></paper-toast>
+		<div class="layout horizontal">
+			<paper-dropdown-menu label="Type" always-float-label noink class="self-center">
+				<paper-listbox class="dropdown-content" selected="{{index}}">
+					<template is="dom-repeat" items="[[types]]" as="type">
+						<paper-item>[[type.name]]</paper-item>
+					</template>
+				</paper-listbox>
+			</paper-dropdown-menu>
+			<paper-button class="self-center" on-tap="add">Add Type</paper-button>
+		</div>
+    <div hidden$="[[!type]]" id="type">
+			<paper-input label="Name" id="name" always-float-label></paper-input>
+			<paper-dropdown-menu label="Layout" always-float-label noink class="self-center" id="layoutMenu">
+				<paper-listbox class="dropdown-content" id="layoutList" attr-for-selected="key" selected="{{layout}}">
+					<template is="dom-repeat" items="[[layouts]]">
+						<paper-item key$="[[item.__firebaseKey__]]">[[item.name]]</paper-item>
+					</template>
+				</paper-listbox>
+			</paper-dropdown-menu>
+			<pp-type-editor id="editor" layout="[[layout]]"></pp-type-editor>
+			<div class="horizontal layout">
+				<paper-button on-tap="save">Save</paper-button>
+				<paper-button on-tap="cancel">Cancel</paper-button>
+				<paper-button on-tap="delete">Delete</paper-button>
+			</div>
+    </div>
+  </template>
+  <script>
+    Polymer(
+      {
+        is: 'pp-page-types',
+        properties: {
+        	types: {
+        		type: Array
+        	},
+        	index: {
+        		type: Number
+        	},
+        	type: {
+        		type: Object,
+        		value: null,
+        		computed: '_computeType(index)',
+        		observer: '_typeChanged'
+        	},
+        	layouts: {
+        		type: Array
+        	},
+        	layout: {
+        		type: String
+        	}
+        },
+        add: function () {
+        	this.push(
+        		'types',
+        		{
+        			name: 'New Page Type'
+        		}
+        	);
+
+					this.async(
+						function () {
+							this.index = this.types.length - 1;
+						},
+						100
+					);
+        },
+        cancel: function () {
+        	this.index = null;
+					this.$.toast.text = 'Type changes discarded';
+					this.$.toast.open();
+        },
+        delete: function () {
+        	if (this.type) {
+						this.splice('types', this.index, 1);
+	        	this.index = null;
+						this.$.toast.text = 'Type deleted';
+						this.$.toast.open();
+        	}
+        },
+        save: function () {
+					if (this.type) {
+						var error = false;
+
+						if (this.$.name.value.trim().length === 0) {
+							error = 'Types must have a valid name';
+						} else if (!this.$.layoutMenu.selectedItem) {
+							error = 'Types must be based on a valid layout';
+						}
+
+						if (!error) {
+							this.set('types.' + this.index + '.name', this.$.name.value);
+							this.set('types.' + this.index + '.layout', this.layout);
+        			this.index = null;
+        			this.$.layoutList.selected = null;
+        			this.$.toast.text = 'Type changes saved';
+        			this.$.toast.open();
+						} else {
+							this.$.toast.text = error;
+							this.$.toast.open();
+						}
+					}
+        },
+        _computeType: function () {
+        	return this.types[this.index];
+        },
+        _typeChanged: function () {
+					if (this.type) {
+						this.$.name.value = this.type.name;
+						this.$.layoutList.selected = this.type.layout;
+					}
+        }
+      }
+    );
+  </script>
 </dom-module>

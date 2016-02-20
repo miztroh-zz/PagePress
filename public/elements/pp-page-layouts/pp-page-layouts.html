@@ -1,7 +1,6 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
-<link rel="import" href="/elements/pp-layout-editor/pp-layout-editor.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
@@ -9,6 +8,7 @@
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="/elements/pp-layout-editor/pp-layout-editor.html">
 <dom-module id="pp-page-layouts">
   <template>
     <style>
@@ -55,10 +55,7 @@
         is: 'pp-page-layouts',
         properties: {
         	layouts: {
-        		type: Array,
-        		value: function () {
-        			return [];
-        		}
+        		type: Array
         	},
         	index: {
         		type: Number
@@ -112,7 +109,9 @@
 					if (this.layout) {
 						var error = false;
 
-						if (this.$.editor.rows.length === 0) {
+						if (this.$.name.value.trim().length === 0) {
+							error = 'Layouts must have a valid name';
+						} else if (this.$.editor.rows.length === 0) {
 							error = 'Layouts must include at least one row';
 						} else {
 							for (var i = 0; i < this.$.editor.rows.length; i += 1) {
@@ -140,7 +139,7 @@
         },
         _layoutChanged: function () {
 					if (this.layout) {
-						this.$.editor.rows = this.layout.rows || [];
+						this.$.editor.rows = this.layout.rows;
 						this.$.name.value = this.layout.name;
 					}
         }
