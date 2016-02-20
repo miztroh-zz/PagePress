@@ -1,0 +1,192 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/font-roboto/roboto.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/image-icons.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<dom-module id="pp-layout-row">
+  <template>
+    <style>
+      :host {
+        display: block;
+        font-family: Roboto;
+      }
+
+      .slot {
+        min-height: 100px;
+        border: 1px dashed gray;
+        @apply(--layout-vertical);
+      }
+
+      @media (min-width: 768px) {
+        #slots {
+          @apply(--layout-horizontal);
+        }
+
+        .slot[slot-width="1"] {
+          width: calc((100% / 12 * 1) - 2px);
+        }
+
+        .slot[slot-width="2"] {
+          width: calc((100% / 12 * 2) - 2px);
+        }
+
+        .slot[slot-width="3"] {
+          width: calc((100% / 12 * 3) - 2px);
+        }
+
+        .slot[slot-width="4"] {
+          width: calc((100% / 12 * 4) - 2px);
+        }
+
+        .slot[slot-width="5"] {
+          width: calc((100% / 12 * 5) - 2px);
+        }
+
+        .slot[slot-width="6"] {
+          width: calc((100% / 12 * 6) - 2px);
+        }
+
+        .slot[slot-width="7"] {
+          width: calc((100% / 12 * 7) - 2px);
+        }
+
+        .slot[slot-width="8"] {
+          width: calc((100% / 12 * 8) - 2px);
+        }
+
+        .slot[slot-width="9"] {
+          width: calc((100% / 12 * 9) - 2px);
+        }
+
+        .slot[slot-width="10"] {
+          width: calc((100% / 12 * 10) - 2px);
+        }
+
+        .slot[slot-width="11"] {
+          width: calc((100% / 12 * 11) - 2px);
+        }
+
+        .slot[slot-width="12"] {
+          width: calc((100% / 12 * 12) - 2px);
+        }
+      }
+
+      .slot paper-button {
+        padding: 0;
+        margin: 0;
+        height: 30px;
+        line-height: 30px;
+        border-radius: 0px;
+        min-width: 30px;
+        background: transparent;
+        text-transform: none;
+      }
+
+      .slot paper-button iron-icon {
+        pointer-events: none;
+      }
+    </style>
+    <paper-icon-button icon="add" disabled$="[[_hideIncrease(slots.*)]]" on-tap="add"></paper-icon-button>
+    <paper-dropdown-menu label="Justification" always-float-label noink>
+      <paper-listbox class="dropdown-content" attr-for-selected="justification" selected="{{justification}}">
+        <paper-item justification="start-justified">start-justified</paper-item>
+        <paper-item justification="center-justified">center-justified</paper-item>
+        <paper-item justification="end-justified">end-justified</paper-item>
+        <paper-item justification="justified">justified</paper-item>
+        <paper-item justification="around-justified">around-justified</paper-item>
+      </paper-listbox>
+    </paper-dropdown-menu>
+    <div id="slots" class$="[[justification]]">
+      <template is="dom-repeat" items="[[slots]]" as="slot">
+        <div class="slot" slot-width$="[[slot.width]]">
+          <div class="horizontal layout wrap">
+            <paper-button disabled="[[_hideIncrease(index, slots.*)]]" on-tap="_increase" slot-index$="[[index]]">
+              <iron-icon icon="image:exposure-plus-1"></iron-icon>
+            </paper-button>
+            <paper-button disabled="[[_hideDecrease(index, slots.*)]]" on-tap="_decrease" slot-index$="[[index]]">
+              <iron-icon icon="image:exposure-neg-1"></iron-icon>
+            </paper-button>
+            <paper-button on-tap="_remove" slot-index$="[[index]]">
+              <iron-icon icon="delete"></iron-icon>
+            </paper-button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </template>
+  <script>
+    Polymer(
+      {
+        is: 'pp-layout-row',
+        properties: {
+          justification: {
+            type: String,
+            value: 'start-justified'
+          },
+          slots: {
+            type: Array,
+            value: function () {
+              return [];
+            }
+          }
+        },
+        ready: function () {
+          this.push('slots', {width: 2});
+          this.push('slots', {width: 3});
+          this.push('slots', {width: 4});
+        },
+        add: function () {
+          if (this._hideIncrease()) return;
+          this.push('slots', {width: 1});
+        },
+        _hideDecrease: function (index) {
+          return this.slots[index] && this.slots[index].width === 1;
+        },
+        _hideIncrease: function () {
+          var width = 0;
+
+          for (var i = 0; i < this.slots.length; i += 1) {
+            width += this.slots[i].width;
+          }
+
+          if (width >= 12) return true;
+          return false;
+        },
+        _decrease: function (event) {
+          try {
+            var index = +Polymer.dom(event).rootTarget.getAttribute('slot-index');
+            var slot = this.slots[index];
+            if (slot && slot.width > 1) this.set('slots.' + index + '.width', slot.width - 1);
+          } catch (ignore) {}
+        },
+        _increase: function (event) {
+          if (this._hideIncrease()) return;
+
+          try {
+            var index = +Polymer.dom(event).rootTarget.getAttribute('slot-index');
+            var slot = this.slots[index];
+            if (slot) this.set('slots.' + index + '.width', slot.width + 1);
+          } catch (ignore) {}
+        },
+        _remove: function (event) {
+          try {
+            var index = +Polymer.dom(event).rootTarget.getAttribute('slot-index');
+            var slot = this.slots[index];
+            if (slot) this.splice('slots', index, 1);
+          } catch (ignore) {}
+        },
+        _slots: function () {
+          return this.slots.slice(0);
+        }
+      }
+    );
+  </script>
+</dom-module>
