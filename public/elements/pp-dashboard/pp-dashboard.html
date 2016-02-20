@@ -1,0 +1,122 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="/bower_components/paper-header-panel/paper-header-panel.html">
+<link rel="import" href="/bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="/bower_components/font-roboto/roboto.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="/bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="/bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="/bower_components/paper-item/paper-item.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="/bower_components/firebase-element/firebase-auth.html">
+<link rel="import" href="/elements/pp-page-layouts/pp-page-layouts.html">
+<link rel="import" href="/elements/pp-page-types/pp-page-types.html">
+<dom-module id="pp-dashboard">
+  <template>
+    <style>
+      :host {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        font-family: Roboto;
+      }
+
+			paper-listbox paper-item:hover {
+				cursor: pointer;
+			}
+
+			iron-pages {
+				padding: 20px;
+			}
+
+			iron-pages section > :first-child {
+				margin-top: 0;
+			}
+
+			iron-pages section > :last-child {
+				margin-bottom: 0;
+			}
+
+			#logout {
+				margin: 0;
+				border-radius: 0;
+			}
+    </style>
+    <firebase-auth location="https://ss16-page-press.firebaseio.com" user="{{user}}" provider="google" id="auth"></firebase-auth>
+    <paper-drawer-panel force-narrow id="drawerPanel" hidden$="[[!user]]">
+      <paper-header-panel drawer>
+        <paper-toolbar>
+          <div>Navigation</div>
+        </paper-toolbar>
+        <div class="fit vertical layout">
+	        <paper-listbox selected="{{page}}" attr-for-selected="page">
+	        	<paper-item page="Overview">Overview</paper-item>
+	        	<paper-item page="Page Layouts">Page Layouts</paper-item>
+	        	<paper-item page="Page Types">Page Types</paper-item>
+	        </paper-listbox>
+	        <div class="flex"></div>
+	        <div class="horizontal layout">
+	        	<paper-button id="logout" class="flex" on-tap="logout">Log Out</paper-button>
+	        </div>
+        </div>
+      </paper-header-panel>
+      <paper-header-panel main>
+        <paper-toolbar>
+          <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+          <div>Dashboard</div>
+        </paper-toolbar>
+        <iron-pages selected="[[page]]" attr-for-selected="page">
+        	<section page="Overview">
+        		<h1>Overview</h1>
+        	</section>
+        	<section page="Page Layouts">
+        		<h1>Page Layouts</h1>
+        		<pp-page-layouts></pp-page-layouts>
+        	</section>
+        	<section page="Page Types">
+        		<h1>Page Types</h1>
+        		<pp-page-types></pp-page-types>
+        	</section>
+        </iron-pages>
+      </paper-header-panel>
+    </paper-drawer-panel>
+    <div class="fit horizontal layout center-justified" hidden$="[[user]]" id="login-backdrop">
+    	<paper-button class="self-center" raised on-tap="login" id="login-button">Log In</paper-button>
+    </div>
+  </template>
+  <script>
+    Polymer(
+      {
+        is: 'pp-dashboard',
+        properties: {
+        	page: {
+        		type: String,
+        		value: 'Overview',
+        		observer: '_pageChanged'
+        	},
+        	user: {
+        		type: Object
+        	}
+        },
+				login: function () {
+					if (!this.user) this.$.auth.ref.authWithOAuthPopup(
+						'google',
+						function () {},
+						{
+							remember: 'sessionOnly',
+							scope: 'email'
+						}
+					);
+				},
+				logout: function () {
+					if (this.user) this.$.auth.logout();
+				},
+        _pageChanged: function () {
+					this.$.drawerPanel.closeDrawer();
+        }
+      }
+    );
+  </script>
+</dom-module>
