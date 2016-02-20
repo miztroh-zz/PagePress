@@ -93,7 +93,22 @@
         properties: {
         	page: {
         		type: String,
-        		value: 'Overview',
+        		value: function () {
+        			var page = 'Overview';
+
+        			switch (window.location.pathname) {
+        				case '/dashboard/page-layouts/':
+        				case '/dashboard/page-layouts':
+        					page = 'Page Layouts';
+        					break;
+        				case '/dashboard/page-types/':
+        				case '/dashboard/page-types':
+        					page = 'Page Types';
+        					break;
+        			}
+
+							return page;
+        		},
         		observer: '_pageChanged'
         	},
         	user: {
@@ -114,6 +129,18 @@
 					if (this.user) this.$.auth.logout();
 				},
         _pageChanged: function () {
+        	var path = '/dashboard/';
+
+        	switch (this.page) {
+        		case 'Page Layouts':
+        			path += 'page-layouts/';
+        			break;
+        		case 'Page Types':
+        			path += 'page-types/';
+        			break;
+        	}
+
+					history.pushState(null, null, path);
 					this.$.drawerPanel.closeDrawer();
         }
       }

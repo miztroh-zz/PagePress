@@ -2,6 +2,9 @@
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/iron-media-query/iron-media-query.html">
+<link rel="import" href="/bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="/bower_components/paper-item/paper-item.html">
 <dom-module id="pp-type-editor">
 	<template>
 		<style>
@@ -13,13 +16,11 @@
 				margin: 15px 0;
 			}
 
-			#rows .row {
-				min-height: 100px;
-			}
-
 			.column {
 				border: 1px solid white;
 				background: rgba(0, 0, 0, .7);
+				padding: 0;
+				min-height: 100px;
 			}
 
 			.column:hover {
@@ -74,15 +75,42 @@
         .column[column-width="12"] {
           width: calc((100% / 12 * 12) - 2px);
         }
+
+				.column .dropdown-trigger {
+					@apply(--layout-fit);
+				}
       }
+
+			@media (max-width: 767px) {
+				.column {
+					display: block;
+				}
+			}
+
+			.block {
+				font-size: 12px;
+				text-align: center;
+				color: white;
+			}
 		</style>
     <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
 		<firebase-collection location="[[url]]" data="{{rows}}"></firebase-collection>
 		<div id="rows">
-			<template is="dom-repeat" items="[[rows]]" as="row">
+			<template is="dom-repeat" items="[[rows]]" as="row" index-as="rowIndex">
 				<div class$="row [[_justification(row.justification, minWidth768px)]]">
-					<template is="dom-repeat" items="[[row.columns]]" as="column">
-						<div class="column" column-width$="[[column.width]]"></div>
+					<template is="dom-repeat" items="[[row.columns]]" as="column" index-as="columnIndex">
+						<paper-menu-button class="column" column-width$="[[column.width]]">
+							<div class="dropdown-trigger">
+								<div class="fit horizontal layout center-justified">
+									<div class="self-center block">[[_blockDescription(rowIndex, columnIndex, blocks.*)]]</div>
+								</div>
+							</div>
+							<paper-listbox class="dropdown-content" on-iron-select="_ironSelect" row-index$="[[rowIndex]]" column-index$="[[columnIndex]]" attr-for-selected="block" selected="[[_blockName(rowIndex, columnIndex, blocks.*)]]">
+								<template is="dom-repeat" items="[[blockTypes]]" as="block">
+									<paper-item block="[[block.name]]">[[block.description]]</paper-item>
+								</template>
+							</paper-listbox>
+						</paper-menu-button>
 					</template>
 				</div>
 			</template>
@@ -94,17 +122,39 @@
 				is: 'pp-type-editor',
 				properties: {
 					layout: {
-						type: String
+						type: String,
+						observer: '_layoutChanged'
 					},
 					url: {
 						type: String,
 						computed: '_computeUrl(layout)'
 					},
 					rows: {
-						type: Object
+						type: Object,
+						observer: '_rowsChanged'
 					},
           minWidth768px: {
             type: Boolean
+          },
+          blocks: {
+          	type: Array,
+          	notify: true,
+        		observer: '_blocksChanged'
+          },
+          blockTypes: {
+          	type: Array,
+          	value: function () {
+          		return [
+          			{
+          				name: 'none',
+          				description: 'None'
+          			},
+          			{
+          				name: 'placeholder',
+          				description: 'Page specific content'
+          			}
+          		];
+          	}
           }
 				},
 				_computeUrl: function () {
@@ -113,6 +163,64 @@
         _justification: function (justification) {
           if (!this.minWidth768px) return '';
           return 'layout horizontal ' + justification;
+        },
+        _ironSelect: function (event) {
+        	var target = Polymer.dom(event).rootTarget, block = target.selected, blockIndex = this._blockIndex(+target.getAttribute('row-index'), +target.getAttribute('column-index'));
+					if (blockIndex >= 0) this.blocks[blockIndex] = block;
+					this.blocks = this.blocks.slice(0);
+        },
+        _rowsChanged: function () {
+        	this.async(
+        		function () {
+		        	var lists = this.$.rows.querySelectorAll('paper-listbox');
+
+							for (var i = 0; i < lists.length; i += 1) {
+								lists[i].selected = null;
+							}
+        		},
+        		100
+        	);
+        },
+        _layoutChanged: function () {
+        	this.blocks = [];
+        },
+        _blockIndex: function (rowIndex, columnIndex) {
+					var blockIndex = -1;
+
+					if (this.rows.length) {
+						for (var i = 0; i <= rowIndex; i += 1) {
+							for (var j = 0; j < (i === rowIndex ? columnIndex + 1 : this.rows[i].columns.length); j += 1) {
+								blockIndex += 1;
+							}
+						}
+					}
+
+					return blockIndex;
+        },
+        _blockDescription: function (rowIndex, columnIndex) {
+        	var blockIndex = this._blockIndex(rowIndex, columnIndex);
+
+					if (blockIndex >= 0 && this.blocks[blockIndex]) {
+						var name = this.blocks[blockIndex];
+
+						for (var i = 0; i < this.blockTypes.length; i += 1) {
+							if (this.blockTypes[i].name === name) return this.blockTypes[i].description;
+						}
+					}
+
+					return 'None';
+        },
+        _blockName: function (rowIndex, columnIndex) {
+        	var blockIndex = this._blockIndex(rowIndex, columnIndex);
+
+					if (blockIndex >= 0 && this.blocks[blockIndex]) {
+						return this.blocks[blockIndex];
+					}
+
+					return 'none';
+        },
+        _blocksChanged: function () {
+        	if (!Array.isArray(this.blocks)) this.blocks = [];
         }
 			}
 		);

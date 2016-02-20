@@ -7,9 +7,13 @@
     "**/node_modules/**"
   ],
   "rewrites": [
+		{
+			"source": "!/dashboard/*",
+			"destination": "/index.html"
+		},
     {
-      "source": "**",
-      "destination": "/redirect.html"
+    	"source": "/dashboard/*",
+    	"destination": "/dashboard/index.html"
     }
   ]
 }

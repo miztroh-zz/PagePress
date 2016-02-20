@@ -151,13 +151,15 @@
         properties: {
           justification: {
             type: String,
-            value: 'start-justified'
+            value: 'start-justified',
+            notify: true
           },
           columns: {
             type: Array,
             value: function () {
               return [];
-            }
+            },
+            notify: true
           },
           minWidth768px: {
             type: Boolean
