@@ -1,25 +1,25 @@
 {
-  "name": "page-press",
-  "homepage": "https://github.com/miztroh/page-press",
-  "authors": [
-    "Jonathan Cox <miztroh@gmail.com>"
-  ],
-  "description": "",
-  "main": "index.html",
-  "moduleType": [],
-  "license": "MIT",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests"
-  ],
-  "dependencies": {
-    "polymer": "Polymer/polymer#latest",
-    "iron-elements": "PolymerElements/iron-elements#latest",
-    "paper-elements": "PolymerElements/paper-elements#latest",
-    "google-web-components": "GoogleWebComponents/google-web-components#^1.0.1",
-    "wysiwyg-e": "miztroh/wysiwyg-e"
-  }
+	"name": "page-press",
+	"homepage": "https://github.com/miztroh/page-press",
+	"authors": [
+		"Jonathan Cox <miztroh@gmail.com>"
+	],
+	"description": "",
+	"main": "index.html",
+	"moduleType": [],
+	"license": "MIT",
+	"ignore": [
+		"**/.*",
+		"node_modules",
+		"bower_components",
+		"test",
+		"tests"
+	],
+	"dependencies": {
+		"polymer": "Polymer/polymer#latest",
+		"iron-elements": "PolymerElements/iron-elements#latest",
+		"paper-elements": "PolymerElements/paper-elements#latest",
+		"google-web-components": "GoogleWebComponents/google-web-components#^1.0.1",
+		"wysiwyg-e": "miztroh/wysiwyg-e"
+	}
 }
