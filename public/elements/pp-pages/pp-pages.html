@@ -8,9 +8,11 @@
 <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="/bower_components/paper-item/paper-item.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/elements/pp-page-editor/pp-page-editor.html">
 <dom-module id="pp-pages">
 	<template>
@@ -35,18 +37,47 @@
 				background: #f5f5f5;
 			}
 
+			iron-list {
+				min-height: 100px;
+			}
+
 			#add {
 				margin-bottom: 15px;
 			}
 
-			iron-list {
-				min-height: 100px;
+			#page {
+				margin-bottom: 15px;
+				padding: 15px;
+				border: 1px solid #ddd;
+			}
+
+			paper-input,
+			paper-dropdown-menu {
+				width: 300px;
+				max-width: 100%;
 			}
 		</style>
 		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" data="{{pages}}"></firebase-collection>
+		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-types" data="{{types}}"></firebase-collection>
 		<paper-toast id="toast"></paper-toast>
-		<pp-page-editor id="editor" title="{{title}}" type="{{type}}"></pp-page-editor>
 		<paper-button id="add" on-tap="add">Add</paper-button>
+    <div hidden$="[[!page]]" id="page">
+			<paper-input label="Title" id="title" always-float-label></paper-input>
+			<paper-dropdown-menu label="Type" always-float-label noink class="self-center" id="typeMenu">
+				<paper-listbox class="dropdown-content" id="typeList" attr-for-selected="key" selected="{{type}}">
+					<template is="dom-repeat" items="[[types]]">
+						<paper-item key$="[[item.__firebaseKey__]]">[[item.name]]</paper-item>
+					</template>
+				</paper-listbox>
+			</paper-dropdown-menu>
+			<pp-type-editor id="editor" layout="[[layout]]"></pp-type-editor>
+			<div class="horizontal layout">
+				<paper-button on-tap="save">Save</paper-button>
+				<paper-button on-tap="cancel">Cancel</paper-button>
+				<paper-button on-tap="delete">Delete</paper-button>
+			</div>
+    </div>
+		<pp-page-editor id="editor" title="{{title}}" type="{{type}}"></pp-page-editor>
 		<iron-list items="[[orderedPages]]" as="page">
 			<template>
 			<div class="page">
@@ -55,7 +86,6 @@
 				<div class="horizontal layout" style="padding: 5px;">
 					<paper-icon-button icon="image:edit" on-tap="_edit" page-index$="[[index]]"></paper-icon-button>
 					<paper-icon-button icon="open-in-new" on-tap="_view" page-index$="[[index]]"></paper-icon-button>
-					<paper-icon-button icon="delete" on-tap="_delete" page-index$="[[index]]"></paper-icon-button>
 				</div>
 			</div>
 			</template>
@@ -78,14 +108,18 @@
         	page: {
         		type: Object,
         		value: null,
-        		computed: '_computePage(index)'
+        		computed: '_computePage(index)',
+        		observer: '_pageChanged'
         	},
         	type: {
         		type: String
         	},
         	title: {
         		type: String
-        	}
+        	},
+					types: {
+						type: Array
+					}
 				},
 				observers: [
 					'_pagesChanged(pages.*)'
@@ -110,15 +144,14 @@
 					this.$.toast.text = 'Page added';
 					this.$.toast.open();
         },
-        _edit: function (event) {
-        	this._updateIndex(event);
-        	this.edit();
+        cancel: function () {
+        	this.index = null;
+					this.$.toast.text = 'Page changes discarded';
+					this.$.toast.open();
         },
-        edit: function () {
-					var page = this.orderedPages[this.index];
-
-					if (page) {
-					}
+        _edit: function (event) {
+					var target = Polymer.dom(event).localTarget, index = +target.getAttribute('page-index');
+					if (index >= 0) this.index = index;
         },
 				_pagesChanged: function () {
 					this.async(
@@ -186,44 +219,31 @@
 								}
 							}
 
-							//console.log(pagesHierarchical);
 							flattenPages(pagesHierarchical);
-							//console.log(pagesFlat);
 							this.orderedPages = pagesFlat;
 						},
 						1000
 					);
 				},
 				_view: function (event) {
-					this._updateIndex(event);
-					this.view();
-				},
-				view: function () {
-					var page = this.orderedPages[this.index];
-					console.log(page);
+					var target = Polymer.dom(event).localTarget, index = +target.getAttribute('page-index');
 
-					if (page) {
-						var path = '/';
+					if (index >= 0) {
+						var page = this.orderedPages[index];
 
-						for (var i = page.ancestors.length - 1; i >= 0; i -= 1) {
-							path += page.ancestors[i].slug + '/';
+						if (page) {
+							var path = '/';
+
+							for (var i = page.ancestors.length - 1; i >= 0; i -= 1) {
+								path += page.ancestors[i].slug + '/';
+							}
+
+							path += page.slug + '/';
+							window.open(path);
 						}
-
-						path += page.slug + '/';
-						window.open(path);
 					}
 				},
-				_updateIndex: function (event) {
-					var target = Polymer.dom(event).localTarget, index = +target.getAttribute('page-index');
-					if (index >= 0) this.index = index;
-				},
-				_delete: function (event) {
-					this._updateIndex(event);
-					this.delete();
-				},
 				delete: function () {
-					var page = this.orderedPages[this.index];
-
 					if (page) {
 						var pageIndexesByFirebaseKey = {};
 
@@ -231,20 +251,48 @@
 							pageIndexesByFirebaseKey[this.pages[i].__firebaseKey__] = i;
 						}
 
-						var pageIndex = pageIndexesByFirebaseKey[page.__firebaseKey__];
-
 						for (i = 0; i < page.children.length; i += 1) {
 							var childIndex = pageIndexesByFirebaseKey[page.children[i].__firebaseKey__];
-							this.set('pages.' + childIndex + '.parent', this.pages[pageIndex].parent);
+							this.set('pages.' + childIndex + '.parent', this.page.parent);
 						}
 
-						this.splice('pages', pageIndex, 1);
+						this.splice('pages', this.index, 1);
+	        	this.index = null;
 						this.$.toast.text = 'Page deleted';
 						this.$.toast.open();
 					}
 				},
+        save: function () {
+					if (this.page) {
+						var error = false;
+
+						if (this.$.title.value.trim().length === 0) {
+							error = 'Pages must have a valid title';
+						} else if (!this.$.typeMenu.selectedItem) {
+							error = 'Pages must be based on a valid type';
+						}
+
+						if (!error) {
+							this.set('pages.' + this.index + '.title', this.$.title.value);
+							this.set('pages.' + this.index + '.type', this.type);
+        			this.index = null;
+        			this.$.typeList.selected = null;
+        			this.$.toast.text = 'Page changes saved';
+        			this.$.toast.open();
+						} else {
+							this.$.toast.text = error;
+							this.$.toast.open();
+						}
+					}
+        },
         _computePage: function () {
         	return this.pages[this.index];
+        },
+        _pageChanged: function () {
+					if (this.page) {
+						this.$.title.value = this.page.title;
+						this.$.typeList.selected = this.page.type;
+					}
         }
 			}
 		);

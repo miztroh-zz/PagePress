@@ -1,7 +1,6 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <dom-module id="pp-page-editor">
 	<template>
 		<style>
@@ -10,24 +9,11 @@
 				font-family: Roboto;
 			}
 		</style>
-		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-types" data="{{types}}"></firebase-collection>
-		<paper-dropdown-menu label="Type" always-float-label noink class="self-center">
-			<paper-listbox class="dropdown-content" selected="{{index}}">
-				<template is="dom-repeat" items="[[types]]" as="type">
-					<paper-item>[[type.name]]</paper-item>
-				</template>
-			</paper-listbox>
-		</paper-dropdown-menu>
 	</template>
 	<script>
 		Polymer(
 			{
-				is: 'pp-page-editor',
-				properties: {
-					types: {
-						type: Array
-					}
-				}
+				is: 'pp-page-editor'
 			}
 		);
 	</script>
