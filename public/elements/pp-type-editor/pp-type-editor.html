@@ -6,6 +6,7 @@
 <link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="/bower_components/paper-item/paper-item.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
+<link rel="import" href="/elements/pp-block-types-behavior/pp-block-types-behavior.html">
 <dom-module id="pp-type-editor">
 	<template>
 		<style>
@@ -121,6 +122,9 @@
 		Polymer(
 			{
 				is: 'pp-type-editor',
+				behaviors: [
+					PagePress.BlockTypesBehavior
+				],
 				properties: {
 					layout: {
 						type: String,
@@ -141,21 +145,6 @@
           	type: Array,
           	notify: true,
         		observer: '_blocksChanged'
-          },
-          blockTypes: {
-          	type: Array,
-          	value: function () {
-          		return [
-          			{
-          				name: 'none',
-          				description: 'None'
-          			},
-          			{
-          				name: 'placeholder',
-          				description: 'Page specific content'
-          			}
-          		];
-          	}
           }
 				},
 				_computeUrl: function () {

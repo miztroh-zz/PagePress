@@ -1,0 +1,39 @@
+<script>
+	PagePress = window.PagePress || {};
+
+	PagePress.BlockTypesBehavior = {
+		properties: {
+			blockTypes: {
+				type: Array,
+				value: function () {
+					return [
+						{
+							name: 'none',
+							description: 'None'
+						},
+						{
+							name: 'dynamic',
+							description: 'Dynamic content'
+						},
+						{
+							name: 'static',
+							description: 'Static content'
+						},
+						{
+							name: 'page-title-left',
+							description: 'Page title (align left)'
+						},
+						{
+							name: 'page-title-center',
+							description: 'Page title (align center)'
+						},
+						{
+							name: 'page-title-right',
+							description: 'Page title (align right)'
+						}
+					];
+				}
+			}
+		}
+	};
+</script>

@@ -94,6 +94,10 @@
 					display: block;
 				}
 			}
+
+			a {
+				color: #2a9af2;
+			}
 		</style>
 		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" id="pages"></firebase-collection>
 		<firebase-collection location="[[_pageLocation(key)]]" id="page" data="{{_page}}"></firebase-collection>
@@ -108,14 +112,22 @@
 				</h1>
 			</div>
 			<div id="page" hidden$="[[!page]]">
-				<h1>[[page.title]]</h1>
 				<div id="rows">
 					<template is="dom-repeat" items="[[rows]]" as="row" index-as="rowIndex">
 						<div class$="row [[_justification(row.justification, minWidth768px)]]">
 							<template is="dom-repeat" items="[[row.columns]]" as="column" index-as="columnIndex">
 								<div class="column" column-width$="[[column.width]]">
-									<template is="dom-if" if="[[_blockIsPlaceholder(rowIndex, columnIndex)]]">
-										<div inner-h-t-m-l="[[_blockPlaceholderHTML(rowIndex, columnIndex)]]"></div>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'dynamic')]]">
+										<div inner-h-t-m-l="[[_blockDynamicHTML(rowIndex, columnIndex)]]"></div>
+									</template>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-left')]]">
+										<h1>[[page.title]]</h1>
+									</template>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-center')]]">
+										<h1 style="text-align: center;">[[page.title]]</h1>
+									</template>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-right')]]">
+										<h1 style="text-align: right;">[[page.title]]</h1>
 									</template>
 								</div>
 							</template>
@@ -165,6 +177,9 @@
           minWidth768px: {
             type: Boolean
           }
+				},
+				ready: function () {
+					this.scopeSubtree(this.$.rows, true);
 				},
 				_computeTypeLayoutUrl: function () {
 					return (this.page && this.page.type) ? 'https://ss16-page-press.firebaseio.com/page-types/' + this.page.type + '/layout' : '';
@@ -263,12 +278,12 @@
 
 					return 'none';
         },
-        _blockIsPlaceholder: function (rowIndex, columnIndex) {
-        	return this._blockName(rowIndex, columnIndex) === 'placeholder';
+        _blockIs: function (rowIndex, columnIndex, name) {
+        	return this._blockName(rowIndex, columnIndex) === name;
         },
-        _blockPlaceholderHTML: function (rowIndex, columnIndex) {
-        	if (this._blockIsPlaceholder(rowIndex, columnIndex)) {
-        		return this.page.blocks[this._blockIndex(rowIndex, columnIndex)].value;
+        _blockDynamicHTML: function (rowIndex, columnIndex) {
+        	if (this._blockIs(rowIndex, columnIndex, 'dynamic')) {
+        		return (this.page.blocks[this._blockIndex(rowIndex, columnIndex)] && this.page.blocks[this._blockIndex(rowIndex, columnIndex)].value) ? this.page.blocks[this._blockIndex(rowIndex, columnIndex)].value : '';
         	} else {
         		return '';
         	}

@@ -56,6 +56,12 @@
 				width: 300px;
 				max-width: 100%;
 			}
+
+			paper-dropdown-menu,
+			paper-input {
+				--paper-input-container-focus-color: #2a9af2;
+				--paper-input-container-invalid-color: #d23f31;
+			}
 		</style>
 		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" data="{{pages}}"></firebase-collection>
 		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-types" data="{{types}}"></firebase-collection>
@@ -283,7 +289,7 @@
 									var typeBlocks = this.types[i].blocks;
 
 									for (var j = 0; j < typeBlocks.length; j += 1) {
-										if (!this.blocks[j]) this.blocks[j] = {name: 'none'};
+										if (!this.blocks[j] || this.blocks[j].name === 'none') this.blocks[j] = {name: typeBlocks[j]};
 									}
 
 									break;

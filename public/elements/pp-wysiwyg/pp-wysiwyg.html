@@ -85,7 +85,7 @@
 					}
 				},
 				save: function () {
-					this.fire('save', {value: this.value});
+					this.fire('save', {value: this.value.replace(new RegExp(' class="style-scope wysiwyg-e"', 'g'), '')});
 					this.close();
 				},
 				cancel: function () {

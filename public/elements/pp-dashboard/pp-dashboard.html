@@ -19,14 +19,14 @@
 <link rel="import" href="/elements/pp-page-types/pp-page-types.html">
 <link rel="import" href="/elements/pp-pages/pp-pages.html">
 <dom-module id="pp-dashboard">
-  <template>
-    <style>
-      :host {
-        display: block;
-        width: 100vw;
-        height: 100vh;
-        font-family: Roboto;
-      }
+	<template>
+		<style>
+			:host {
+				display: block;
+				width: 100vw;
+				height: 100vh;
+				font-family: Roboto;
+			}
 
 			iron-pages {
 				padding: 20px;
@@ -71,118 +71,118 @@
 			#login-backdrop h1 {
 				color: white;
 			}
-    </style>
-    <firebase-auth location="https://ss16-page-press.firebaseio.com" user="{{user}}" provider="google" id="auth"></firebase-auth>
+		</style>
+		<firebase-auth location="https://ss16-page-press.firebaseio.com" user="{{user}}" provider="google" id="auth"></firebase-auth>
 		<firebase-document location="https://ss16-page-press.firebaseio.com/.info/connected" id="connection"></firebase-document>
-    <iron-page-url path="{{path}}" url-space-regex="^/dashboard/"></iron-page-url>
-    <paper-drawer-panel force-narrow id="drawerPanel" hidden$="[[!user]]">
-      <paper-header-panel drawer>
-        <paper-toolbar>
-          <div class="title" style="line-height: 22px; margin-left: 0;"><strong><em>PagePress</em></strong>&nbsp;Navigation</div>
-        </paper-toolbar>
-        <div class="fit vertical layout">
-        	<div id="navigation" on-tap="_closeDrawer">
-		        <a href="/dashboard/">
-		        	<paper-item page="Overview" selected$="[[_equalTo(page, 'Overview')]]">Overview</paper-item>
-		        </a>
-		        <a href="/dashboard/page-layouts/">
-		        	<paper-item page="Page Layouts" selected$="[[_equalTo(page, 'Page Layouts')]]">Page Layouts</paper-item>
-		        </a>
-		        <a href="/dashboard/page-types/">
-		        	<paper-item page="Page Types" selected$="[[_equalTo(page, 'Page Types')]]">Page Types</paper-item>
-		        </a>
-		        <a href="/dashboard/pages/">
-		        	<paper-item page="Pages" selected$="[[_equalTo(page, 'Pages')]]">Pages</paper-item>
-		        </a>
-		       </div>
-	        <div class="flex"></div>
-	        <div class="horizontal layout">
-	        	<paper-button id="logout" class="flex" on-tap="logout">Log Out</paper-button>
-	        </div>
-        </div>
-      </paper-header-panel>
-      <paper-header-panel main>
-        <paper-toolbar>
-          <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
-          <div class="title horizontal layout" style="line-height: 22px;">
-          	<span><strong><em>PagePress</em></strong>&nbsp;Dashboard</span>
-          	<span class="flex"></span>
-          	<iron-icon class="self-center" icon="device:signal-wifi-0-bar" hidden$="[[connected]]"></iron-icon>
-          	<iron-icon class="self-center" icon="device:network-wifi" hidden$="[[!connected]]"></iron-icon>
-          </div>
-        </paper-toolbar>
-        <iron-pages selected="[[page]]" attr-for-selected="page">
-        	<section page="Overview">
-        		<h1>Overview</h1>
-        		<p>Welcome!  PagePress aims to be a content management system (CMS) reimagined as a single-page application (SPA).</p>
-        	</section>
-        	<section page="Page Layouts">
-        		<div class="horizontal layout">
-        			<h1 class="self-center">Page Layouts</h1>
-        			<paper-icon-button icon="help" class="self-center"></paper-icon-button>
-        		</div>
-        		<pp-page-layouts></pp-page-layouts>
-        	</section>
-        	<section page="Page Types">
-        		<div class="horizontal layout">
-        			<h1 class="self-center">Page Types</h1>
-        			<paper-icon-button icon="help" class="self-center"></paper-icon-button>
-        		</div>
-        		<pp-page-types></pp-page-types>
-        	</section>
-        	<section page="Pages">
-        		<div class="horizontal layout">
-        			<h1 class="self-center">Pages</h1>
-        			<paper-icon-button icon="help" class="self-center"></paper-icon-button>
-        		</div>
-        		<pp-pages></pp-pages>
-        	</section>
-        </iron-pages>
+		<iron-page-url path="{{path}}" url-space-regex="^/dashboard/"></iron-page-url>
+		<paper-drawer-panel force-narrow id="drawerPanel" hidden$="[[!user]]">
+			<paper-header-panel drawer>
+				<paper-toolbar>
+					<div class="title" style="line-height: 22px; margin-left: 0;"><strong><em>PagePress</em></strong>&nbsp;Navigation</div>
+				</paper-toolbar>
+				<div class="fit vertical layout">
+					<div id="navigation" on-tap="_closeDrawer">
+						<a href="/dashboard/">
+							<paper-item page="Overview" selected$="[[_equalTo(page, 'Overview')]]">Overview</paper-item>
+						</a>
+						<a href="/dashboard/page-layouts/">
+							<paper-item page="Page Layouts" selected$="[[_equalTo(page, 'Page Layouts')]]">Page Layouts</paper-item>
+						</a>
+						<a href="/dashboard/page-types/">
+							<paper-item page="Page Types" selected$="[[_equalTo(page, 'Page Types')]]">Page Types</paper-item>
+						</a>
+						<a href="/dashboard/pages/">
+							<paper-item page="Pages" selected$="[[_equalTo(page, 'Pages')]]">Pages</paper-item>
+						</a>
+					 </div>
+					<div class="flex"></div>
+					<div class="horizontal layout">
+						<paper-button id="logout" class="flex" on-tap="logout">Log Out</paper-button>
+					</div>
+				</div>
+			</paper-header-panel>
+			<paper-header-panel main>
+				<paper-toolbar>
+					<paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
+					<div class="title horizontal layout" style="line-height: 22px;">
+						<span><strong><em>PagePress</em></strong>&nbsp;Dashboard</span>
+						<span class="flex"></span>
+						<iron-icon class="self-center" icon="device:signal-wifi-0-bar" hidden$="[[connected]]"></iron-icon>
+						<iron-icon class="self-center" icon="device:network-wifi" hidden$="[[!connected]]"></iron-icon>
+					</div>
+				</paper-toolbar>
+				<template is="dom-if" if="[[user]]">
+					<iron-pages selected="[[page]]" attr-for-selected="page">
+						<section page="Overview">
+							<h1>Overview</h1>
+							<p>Welcome!	PagePress aims to be a content management system (CMS) reimagined as a single-page application (SPA).  Current functionality is organized around page layouts, page types, and the pages themselves.</p>
+							<h3>Page Layouts</h3>
+							<p>Reusable layouts arranged in rows and columns with options for how the columns should be justified.  A single layout can be shared among multiple page types.</p>
+							<h3>Page Types</h3>
+							<p>Take a specified layout and configure it with content.  Content (on a per-block basic) can be static across all page instances of a page type or page-specific.  A single page type can be shared among multiple pages.</p>
+							<h3>Pages</h3>
+							<p>Take a specified type and configure it with content.  Static content may be inherited from the type.</p>
+							<div style="margin-top: 50px;">To get started, click the <iron-icon icon="menu"></iron-icon> button at the top left.</div>
+						</section>
+						<section page="Page Layouts">
+							<h1>Page Layouts</h1>
+							<pp-page-layouts></pp-page-layouts>
+						</section>
+						<section page="Page Types">
+							<h1>Page Types</h1>
+							<pp-page-types></pp-page-types>
+						</section>
+						<section page="Pages">
+							<h1>Pages</h1>
+							<pp-pages></pp-pages>
+						</section>
+					</iron-pages>
+				 </template>
 				<div class="fit vertical layout end-justified" style="pointer-events: none;">
 					<paper-toast id="toast" style="pointer-events: all;" class="self-start"></paper-toast>
 				</div>
-      </paper-header-panel>
-    </paper-drawer-panel>
-    <div class="fit horizontal layout center-justified" hidden$="[[user]]" id="login-backdrop">
-    	<div class="self-center vertical layout">
-    		<h1 style="font-weight: normal;"><strong><em>PagePress</em></strong>&nbsp;Dashboard</h1>
-    		<paper-button raised on-tap="login" id="login-button">Log In</paper-button>
-    	</div>
-    </div>
-  </template>
-  <script>
-    Polymer(
-      {
-        is: 'pp-dashboard',
-        properties: {
+			</paper-header-panel>
+		</paper-drawer-panel>
+		<div class="fit horizontal layout center-justified" hidden$="[[user]]" id="login-backdrop">
+			<div class="self-center vertical layout">
+				<h1 style="font-weight: normal;"><strong><em>PagePress</em></strong>&nbsp;Dashboard</h1>
+				<paper-button raised on-tap="login" id="login-button">Log In</paper-button>
+			</div>
+		</div>
+	</template>
+	<script>
+		Polymer(
+			{
+				is: 'pp-dashboard',
+				properties: {
 					path: {
 						type: String,
 						observer: '_pathChanged'
 					},
-        	page: {
-        		type: String
-        	},
-        	user: {
-        		type: Object
-        	},
-        	connected: {
-        		type: Boolean,
-        		value: false,
-        		observer: '_connectedChanged'
-        	}
-        },
-        ready: function () {
-        	this.$.connection.query.on(
-        		'value',
-        		function (snapshot) {
-        			if (snapshot.val() === true) {
-        				this.connected = true;
-        			} else {
-        				this.connected = false;
-        			}
-        		}.bind(this)
-        	);
-        },
+					page: {
+						type: String
+					},
+					user: {
+						type: Object
+					},
+					connected: {
+						type: Boolean,
+						value: false,
+						observer: '_connectedChanged'
+					}
+				},
+				ready: function () {
+					this.$.connection.query.on(
+						'value',
+						function (snapshot) {
+							if (snapshot.val() === true) {
+								this.connected = true;
+							} else {
+								this.connected = false;
+							}
+						}.bind(this)
+					);
+				},
 				login: function () {
 					if (!this.user) this.$.auth.ref.authWithOAuthPopup(
 						'google',
@@ -196,10 +196,10 @@
 				logout: function () {
 					if (this.user) this.$.auth.logout();
 				},
-        _closeDrawer: function () {
+				_closeDrawer: function () {
 					this.$.drawerPanel.closeDrawer();
-        },
-        _pathChanged: function () {
+				},
+				_pathChanged: function () {
 					var page = 'Overview';
 
 					switch (this.path) {
@@ -222,13 +222,13 @@
 				_connectedChanged: function () {
 					if (this.connected) {
 						this.$.toast.text = 'Network connection established';
-        	} else {
-        		this.$.toast.text = 'Network connection lost';
+					} else {
+						this.$.toast.text = 'Network connection lost';
 					}
 
 					this.$.toast.open();
 				}
-      }
-    );
-  </script>
+			}
+		);
+	</script>
 </dom-module>
