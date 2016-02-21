@@ -169,6 +169,9 @@
           		return [];
           	},
           	notify: true
+          },
+          minWidth768px: {
+            type: Boolean
           }
 				},
 				_computeTypeLayoutUrl: function () {
@@ -229,7 +232,8 @@
         	var target = Polymer.dom(event).localTarget, rowIndex = +target.getAttribute('row-index'), columnIndex = +target.getAttribute('column-index'), active = this._blockActive(rowIndex, columnIndex);
  					if (active) {
  						this.activeBlockIndex = this._blockIndex(rowIndex, columnIndex);
- 						this.$.editor.value = this.pageBlocks[this.activeBlockIndex].value;
+        		if (!Array.isArray(this.pageBlocks)) this.pageBlocks = [];
+ 						this.$.editor.value = this.pageBlocks[this.activeBlockIndex] ? this.pageBlocks[this.activeBlockIndex].value : '<p>&nbsp;</p>';
  						this.$.editor.opened = true;
  					} else {
  						this.activeBlockIndex = null;
@@ -239,7 +243,17 @@
         	if (this.activeBlockIndex >= 0) {
         		var block = event.detail;
         		block.name = this.typeBlocks[this.activeBlockIndex];
-        		if (!Array.isArray(this.pageBlocks)) this.pageBlocks = [];
+
+        		if (!Array.isArray(this.pageBlocks)) {
+        			var pageBlocks = [];
+
+							for (var i = 0; i < this.typeBlocks.length; i += 1) {
+								pageBlocks.push({name: this.typeBlocks[i]});
+							}
+
+							this.pageBlocks = pageBlocks;
+        		}
+
         		this.pageBlocks[this.activeBlockIndex] = block;
         		this.activeBlockIndex = null
         	}

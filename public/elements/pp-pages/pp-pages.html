@@ -111,7 +111,8 @@
         		observer: '_pageChanged'
         	},
         	type: {
-        		type: String
+        		type: String,
+        		observer: '_typeChanged'
         	},
         	title: {
         		type: String
@@ -275,6 +276,20 @@
 						}
 
 						if (!error) {
+							if (!Array.isArray(this.blocks)) this.blocks = [];
+
+							for (var i = 0; i < this.types.length; i += 1) {
+								if (this.type === this.types[i].__firebaseKey__) {
+									var typeBlocks = this.types[i].blocks;
+
+									for (var j = 0; j < typeBlocks.length; j += 1) {
+										if (!this.blocks[j]) this.blocks[j] = {name: 'none'};
+									}
+
+									break;
+								}
+							}
+
 							this.set('pages.' + this.index + '.title', this.$.title.value);
 							this.set('pages.' + this.index + '.type', this.type);
 							this.set('pages.' + this.index + '.blocks', this.blocks);
@@ -297,6 +312,9 @@
 						this.type = this.page.type;
 						this.blocks = this.page.blocks;
 					}
+        },
+        _typeChanged: function () {
+        	this.blocks = null;
         }
 			}
 		);
