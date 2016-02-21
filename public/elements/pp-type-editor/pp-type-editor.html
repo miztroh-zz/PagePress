@@ -211,13 +211,13 @@
 					return 'None';
         },
         _blockName: function (rowIndex, columnIndex) {
-        	var blockIndex = this._blockIndex(rowIndex, columnIndex);
+        	var blockName = 'none', blockIndex = this._blockIndex(rowIndex, columnIndex);
 
 					if (blockIndex >= 0 && this.blocks[blockIndex]) {
-						return this.blocks[blockIndex];
+						blockName = this.blocks[blockIndex];
 					}
 
-					return 'none';
+					return blockName;
         },
         _blocksChanged: function () {
         	if (!Array.isArray(this.blocks)) this.blocks = [];

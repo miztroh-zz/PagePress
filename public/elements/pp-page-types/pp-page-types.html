@@ -103,6 +103,9 @@
 						},
 						100
 					);
+
+					this.$.toast.text = 'Type added';
+					this.$.toast.open();
         },
         cancel: function () {
         	this.index = null;
@@ -148,7 +151,7 @@
 					if (this.type) {
 						this.$.name.value = this.type.name;
 						this.$.layoutList.selected = this.type.layout;
-						var blocks = [], indexes = Object.keys(this.type.blocks);
+						var blocks = [], indexes = Object.keys(this.type.blocks || []);
 
 						for (var i = 0; i < indexes.length; i += 1) {
 							blocks[+indexes[i]] = this.type.blocks[indexes[i]];
