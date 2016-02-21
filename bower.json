@@ -19,6 +19,7 @@
     "polymer": "Polymer/polymer#latest",
     "iron-elements": "PolymerElements/iron-elements#latest",
     "paper-elements": "PolymerElements/paper-elements#latest",
-    "google-web-components": "GoogleWebComponents/google-web-components#^1.0.1"
+    "google-web-components": "GoogleWebComponents/google-web-components#^1.0.1",
+    "wysiwyg-e": "miztroh/wysiwyg-e"
   }
 }

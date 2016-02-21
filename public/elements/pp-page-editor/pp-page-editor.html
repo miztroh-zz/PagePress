@@ -1,6 +1,10 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
+<link rel="import" href="/bower_components/firebase-element/firebase-document.html">
+<link rel="import" href="/bower_components/iron-media-query/iron-media-query.html">
+<link rel="import" href="/elements/pp-wysiwyg/pp-wysiwyg.html">
 <dom-module id="pp-page-editor">
 	<template>
 		<style>
@@ -8,12 +12,243 @@
 				display: block;
 				font-family: Roboto;
 			}
+
+			#rows {
+				margin: 15px 0;
+			}
+
+			.column {
+				padding: 0;
+				min-height: 100px;
+			}
+
+      @media (min-width: 768px) {
+        .column[column-width="1"] {
+          width: calc((100% / 12 * 1) - 2px);
+        }
+
+        .column[column-width="2"] {
+          width: calc((100% / 12 * 2) - 2px);
+        }
+
+        .column[column-width="3"] {
+          width: calc((100% / 12 * 3) - 2px);
+        }
+
+        .column[column-width="4"] {
+          width: calc((100% / 12 * 4) - 2px);
+        }
+
+        .column[column-width="5"] {
+          width: calc((100% / 12 * 5) - 2px);
+        }
+
+        .column[column-width="6"] {
+          width: calc((100% / 12 * 6) - 2px);
+        }
+
+        .column[column-width="7"] {
+          width: calc((100% / 12 * 7) - 2px);
+        }
+
+        .column[column-width="8"] {
+          width: calc((100% / 12 * 8) - 2px);
+        }
+
+        .column[column-width="9"] {
+          width: calc((100% / 12 * 9) - 2px);
+        }
+
+        .column[column-width="10"] {
+          width: calc((100% / 12 * 10) - 2px);
+        }
+
+        .column[column-width="11"] {
+          width: calc((100% / 12 * 11) - 2px);
+        }
+
+        .column[column-width="12"] {
+          width: calc((100% / 12 * 12) - 2px);
+        }
+
+				.column .dropdown-trigger {
+					@apply(--layout-fit);
+				}
+      }
+
+			@media (max-width: 767px) {
+				.column {
+					display: block;
+				}
+			}
+
+			.block {
+				font-size: 12px;
+				text-align: center;
+				border: 1px solid rgba(0, 0, 0, .7);
+			}
+
+			.block[active] {
+				color: white;
+				background: rgba(0, 0, 0, .7);
+			}
+
+			.block[active]:hover {
+				cursor: pointer;
+			}
 		</style>
+    <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
+		<firebase-document location="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
+		<firebase-document location="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
+		<firebase-collection location="[[layoutRowsUrl]]" data="{{rows}}"></firebase-collection>
+		<div id="rows">
+			<template is="dom-repeat" items="[[rows]]" as="row" index-as="rowIndex">
+				<div class$="row [[_justification(row.justification, minWidth768px)]]">
+					<template is="dom-repeat" items="[[row.columns]]" as="column" index-as="columnIndex">
+						<div class="column relative" column-width$="[[column.width]]">
+							<div class="fit horizontal layout center-justified block" row-index$="[[rowIndex]]" column-index$="[[columnIndex]]" active$="[[_blockActive(rowIndex, columnIndex, typeBlocks.*)]]" on-tap="edit">
+								<div class="self-center" style="pointer-events: none;">[[_blockDescription(rowIndex, columnIndex, typeBlocks.*)]]</div>
+							</div>
+						</div>
+					</template>
+				</div>
+			</template>
+		</div>
+		<pp-wysiwyg id="editor" on-save="_activeBlockSave" on-cancel="_activeBlockCancel"></pp-wysiwyg>
 	</template>
 	<script>
 		Polymer(
 			{
-				is: 'pp-page-editor'
+				is: 'pp-page-editor',
+				properties: {
+					type: {
+						type: String
+					},
+					typeLayoutUrl: {
+						type: String,
+						computed: '_computeTypeLayoutUrl(type)'
+					},
+					layout: {
+						type: String
+					},
+					typeBlocksUrl: {
+						type: String,
+						computed: '_computeTypeBlocksUrl(type)'
+					},
+					typeBlocks: {
+						type: Array
+					},
+					layoutRowsUrl: {
+						type: String,
+						computed: '_computeLayoutRowsUrl(layout)'
+					},
+					rows: {
+						type: Array
+					},
+          blockTypes: {
+          	type: Array,
+          	value: function () {
+          		return [
+          			{
+          				name: 'none',
+          				description: 'None'
+          			},
+          			{
+          				name: 'placeholder',
+          				description: 'Page specific content'
+          			}
+          		];
+          	}
+          },
+          activeBlockIndex: {
+          	type: Object
+          },
+          pageBlocks: {
+          	type: Array,
+          	value: function () {
+          		return [];
+          	},
+          	notify: true
+          }
+				},
+				_computeTypeLayoutUrl: function () {
+					return this.type ? 'https://ss16-page-press.firebaseio.com/page-types/' + this.type + '/layout' : '';
+				},
+				_computeTypeBlocksUrl: function () {
+					return this.type ? 'https://ss16-page-press.firebaseio.com/page-types/' + this.type + '/blocks' : '';
+				},
+				_computeLayoutRowsUrl: function () {
+					return this.layout ? 'https://ss16-page-press.firebaseio.com/page-layouts/' + this.layout + '/rows' : '';
+				},
+        _justification: function (justification) {
+          if (!this.minWidth768px) return '';
+          return 'layout horizontal ' + justification;
+        },
+        _blockIndex: function (rowIndex, columnIndex) {
+					var blockIndex = -1;
+
+					if (this.rows.length) {
+						for (var i = 0; i <= rowIndex; i += 1) {
+							for (var j = 0; j < (i === rowIndex ? columnIndex + 1 : this.rows[i].columns.length); j += 1) {
+								blockIndex += 1;
+							}
+						}
+					}
+
+					return blockIndex;
+        },
+        _blockDescription: function (rowIndex, columnIndex) {
+        	var blockIndex = this._blockIndex(rowIndex, columnIndex);
+
+					if (blockIndex >= 0 && this.typeBlocks[blockIndex]) {
+						var name = this.typeBlocks[blockIndex];
+
+						for (var i = 0; i < this.blockTypes.length; i += 1) {
+							if (this.blockTypes[i].name === name) return this.blockTypes[i].description;
+						}
+					}
+
+					return 'None';
+        },
+        _blockName: function (rowIndex, columnIndex) {
+        	var blockName = 'none', blockIndex = this._blockIndex(rowIndex, columnIndex);
+
+					if (blockIndex >= 0 && this.typeBlocks[blockIndex]) {
+						blockName = this.typeBlocks[blockIndex];
+					}
+
+					return blockName;
+        },
+        _typeBlocksChanged: function () {
+        	if (!Array.isArray(this.typeBlocks)) this.typeBlocks = [];
+        },
+        _blockActive: function (rowIndex, columnIndex) {
+        	return this._blockName(rowIndex, columnIndex) === 'placeholder';
+        },
+        edit: function (event) {
+        	var target = Polymer.dom(event).localTarget, rowIndex = +target.getAttribute('row-index'), columnIndex = +target.getAttribute('column-index'), active = this._blockActive(rowIndex, columnIndex);
+ 					if (active) {
+ 						this.activeBlockIndex = this._blockIndex(rowIndex, columnIndex);
+ 						this.$.editor.value = this.pageBlocks[this.activeBlockIndex].value;
+ 						this.$.editor.opened = true;
+ 					} else {
+ 						this.activeBlockIndex = null;
+ 					}
+        },
+        _activeBlockSave: function (event) {
+        	if (this.activeBlockIndex >= 0) {
+        		var block = event.detail;
+        		block.name = this.typeBlocks[this.activeBlockIndex];
+        		if (!Array.isArray(this.pageBlocks)) this.pageBlocks = [];
+        		this.pageBlocks[this.activeBlockIndex] = block;
+        		this.activeBlockIndex = null
+        	}
+        },
+        _activeBlockCancel: function (event) {
+					if (this.activeBlockIndex >= 0) {
+						this.activeBlockIndex = null;
+					}
+        }
 			}
 		);
 	</script>

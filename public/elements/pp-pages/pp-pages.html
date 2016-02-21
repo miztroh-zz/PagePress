@@ -70,14 +70,13 @@
 					</template>
 				</paper-listbox>
 			</paper-dropdown-menu>
-			<pp-type-editor id="editor" layout="[[layout]]"></pp-type-editor>
+			<pp-page-editor id="editor" type="[[type]]" page-blocks="{{blocks}}"></pp-page-editor>
 			<div class="horizontal layout">
 				<paper-button on-tap="save">Save</paper-button>
 				<paper-button on-tap="cancel">Cancel</paper-button>
 				<paper-button on-tap="delete">Delete</paper-button>
 			</div>
     </div>
-		<pp-page-editor id="editor" title="{{title}}" type="{{type}}"></pp-page-editor>
 		<iron-list items="[[orderedPages]]" as="page">
 			<template>
 			<div class="page">
@@ -118,6 +117,9 @@
         		type: String
         	},
 					types: {
+						type: Array
+					},
+					blocks: {
 						type: Array
 					}
 				},
@@ -275,6 +277,7 @@
 						if (!error) {
 							this.set('pages.' + this.index + '.title', this.$.title.value);
 							this.set('pages.' + this.index + '.type', this.type);
+							this.set('pages.' + this.index + '.blocks', this.blocks);
         			this.index = null;
         			this.$.typeList.selected = null;
         			this.$.toast.text = 'Page changes saved';
@@ -291,7 +294,8 @@
         _pageChanged: function () {
 					if (this.page) {
 						this.$.title.value = this.page.title;
-						this.$.typeList.selected = this.page.type;
+						this.type = this.page.type;
+						this.blocks = this.page.blocks;
 					}
         }
 			}
