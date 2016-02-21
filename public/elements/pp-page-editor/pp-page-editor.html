@@ -150,7 +150,7 @@
 						type: Array
 					},
           activeBlockIndex: {
-          	type: Object
+          	type: Number
           },
           pageBlocks: {
           	type: Array,
@@ -193,7 +193,7 @@
         	var blockIndex = this._blockIndex(rowIndex, columnIndex);
 
 					if (blockIndex >= 0 && this.typeBlocks[blockIndex]) {
-						var name = this.typeBlocks[blockIndex];
+						var name = this.typeBlocks[blockIndex].name;
 
 						for (var i = 0; i < this.blockTypes.length; i += 1) {
 							if (this.blockTypes[i].name === name) return this.blockTypes[i].description;
@@ -206,7 +206,7 @@
         	var blockName = 'none', blockIndex = this._blockIndex(rowIndex, columnIndex);
 
 					if (blockIndex >= 0 && this.typeBlocks[blockIndex]) {
-						blockName = this.typeBlocks[blockIndex];
+						blockName = this.typeBlocks[blockIndex].name;
 					}
 
 					return blockName;
@@ -231,13 +231,13 @@
         _activeBlockSave: function (event) {
         	if (this.activeBlockIndex >= 0) {
         		var block = event.detail;
-        		block.name = this.typeBlocks[this.activeBlockIndex];
+        		block.name = this.typeBlocks[this.activeBlockIndex].name;
 
         		if (!Array.isArray(this.pageBlocks)) {
         			var pageBlocks = [];
 
 							for (var i = 0; i < this.typeBlocks.length; i += 1) {
-								pageBlocks.push({name: this.typeBlocks[i]});
+								pageBlocks.push({name: this.typeBlocks[i].name});
 							}
 
 							this.pageBlocks = pageBlocks;
@@ -248,9 +248,7 @@
         	}
         },
         _activeBlockCancel: function (event) {
-					if (this.activeBlockIndex >= 0) {
-						this.activeBlockIndex = null;
-					}
+					if (this.activeBlockIndex >= 0) this.activeBlockIndex = null;
         }
 			}
 		);

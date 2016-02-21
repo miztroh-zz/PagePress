@@ -14,6 +14,8 @@
 <link rel="import" href="/bower_components/paper-item/paper-item.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/elements/pp-page-editor/pp-page-editor.html">
+<link rel="import" href="/elements/pp-home-page/pp-home-page.html">
+<link rel="import" href="/elements/pp-error-page/pp-error-page.html">
 <dom-module id="pp-pages">
 	<template>
 		<style>
@@ -41,10 +43,6 @@
 				min-height: 100px;
 			}
 
-			#add {
-				margin-bottom: 15px;
-			}
-
 			#page {
 				margin-bottom: 15px;
 				padding: 15px;
@@ -66,7 +64,13 @@
 		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" data="{{pages}}"></firebase-collection>
 		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-types" data="{{types}}"></firebase-collection>
 		<paper-toast id="toast"></paper-toast>
-		<paper-button id="add" on-tap="add">Add</paper-button>
+		<div class="horizontal layout" style="margin-bottom: 15px;">
+			<paper-button on-tap="add">Add</paper-button>
+			<paper-button on-tap="homePage">Home Page</paper-button>
+			<paper-button on-tap="errorPage">404 Page</paper-button>
+		</div>
+		<pp-home-page id="homePage"></pp-home-page>
+		<pp-error-page id="errorPage"></pp-error-page>
     <div hidden$="[[!page]]" id="page">
 			<paper-input label="Title" id="title" always-float-label></paper-input>
 			<paper-dropdown-menu label="Type" always-float-label noink class="self-center" id="typeMenu">
@@ -86,7 +90,7 @@
 		<iron-list items="[[orderedPages]]" as="page">
 			<template>
 			<div class="page">
-				<div style="padding: 15px;"><template is="dom-repeat" items="[[page.ancestors]]" as="ancestor">—&nbsp;</template>[[page.title]]</div>
+				<div style="padding: 15px;"><template is="dom-repeat" items="[[page.ancestors]]" as="ancestor">—&nbsp;</template>[[page.title]] <em>([[page.slug]])</em></div>
 				<div class="flex"></div>
 				<div class="horizontal layout" style="padding: 5px;">
 					<paper-icon-button icon="image:edit" on-tap="_edit" page-index$="[[index]]"></paper-icon-button>
@@ -133,6 +137,12 @@
 				observers: [
 					'_pagesChanged(pages.*)'
 				],
+				homePage: function () {
+					this.$.homePage.opened = true;
+				},
+				errorPage: function () {
+					this.$.errorPage.opened = true;
+				},
         add: function () {
         	this.push(
         		'pages',
@@ -289,7 +299,16 @@
 									var typeBlocks = this.types[i].blocks;
 
 									for (var j = 0; j < typeBlocks.length; j += 1) {
-										if (!this.blocks[j] || this.blocks[j].name === 'none') this.blocks[j] = {name: typeBlocks[j]};
+										if (!this.blocks[j] || this.blocks[j].name === 'none') {
+											var block = {name: typeBlocks[j].name};
+
+											if (block.name === 'static') {
+												block.type = this.types[i].__firebaseKey__;
+												block.index = j;
+											}
+
+											this.set('blocks.' + j, block);
+										}
 									}
 
 									break;
@@ -299,6 +318,16 @@
 							this.set('pages.' + this.index + '.title', this.$.title.value);
 							this.set('pages.' + this.index + '.type', this.type);
 							this.set('pages.' + this.index + '.blocks', this.blocks);
+
+							this.set(
+								'pages.' + this.index + '.slug',
+								//slugify: https://gist.github.com/mathewbyrne/1280286
+								this.$.title.value.toString().toLowerCase().trim()
+									.replace(/&/g, '-and-')			// Replace & with 'and'
+									.replace(/[\s\W-]+/g, '-')	// Replace spaces, non-word characters and dashes with a single dash (-)
+									.replace(/-$/, '')					// Remove last floating dash if exists)
+							);
+
         			this.index = null;
         			this.$.typeList.selected = null;
         			this.$.toast.text = 'Page changes saved';

@@ -7,6 +7,7 @@
 <link rel="import" href="/bower_components/paper-item/paper-item.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <link rel="import" href="/elements/pp-block-types-behavior/pp-block-types-behavior.html">
+<link rel="import" href="/elements/pp-wysiwyg/pp-wysiwyg.html">
 <dom-module id="pp-type-editor">
 	<template>
 		<style>
@@ -107,9 +108,9 @@
 									<div class="self-center block">[[_blockDescription(rowIndex, columnIndex, blocks.*)]]</div>
 								</div>
 							</div>
-							<paper-listbox class="dropdown-content" on-iron-select="_ironSelect" row-index$="[[rowIndex]]" column-index$="[[columnIndex]]" attr-for-selected="block" selected="[[_blockName(rowIndex, columnIndex, blocks.*)]]">
+							<paper-listbox class="dropdown-content" attr-for-selected="block" selected="[[_blockName(rowIndex, columnIndex, blocks.*)]]">
 								<template is="dom-repeat" items="[[blockTypes]]" as="block">
-									<paper-item block="[[block.name]]">[[block.description]]</paper-item>
+									<paper-item block="[[block.name]]" on-tap="_selectBlock" row-index$="[[rowIndex]]" column-index$="[[columnIndex]]">[[block.description]]</paper-item>
 								</template>
 							</paper-listbox>
 						</paper-menu-button>
@@ -117,6 +118,7 @@
 				</div>
 			</template>
 		</div>
+		<pp-wysiwyg id="editor" on-save="_activeBlockSave" on-cancel="_activeBlockCancel"></pp-wysiwyg>
 	</template>
 	<script>
 		Polymer(
@@ -145,6 +147,9 @@
           	type: Array,
           	notify: true,
         		observer: '_blocksChanged'
+          },
+          activeBlockIndex: {
+          	type: Number
           }
 				},
 				_computeUrl: function () {
@@ -154,10 +159,25 @@
           if (!this.minWidth768px) return '';
           return 'layout horizontal ' + justification;
         },
-        _ironSelect: function (event) {
-        	var target = Polymer.dom(event).rootTarget, block = target.selected, blockIndex = this._blockIndex(+target.getAttribute('row-index'), +target.getAttribute('column-index'));
-					if (blockIndex >= 0) this.blocks[blockIndex] = block;
-					this.blocks = this.blocks.slice(0);
+        _selectBlock: function (event) {
+        	var target = Polymer.dom(event).localTarget;
+
+					this.async(
+						function () {
+		        	var block = target.parentNode.selected, blockIndex = this._blockIndex(+target.getAttribute('row-index'), +target.getAttribute('column-index'));
+							if (blockIndex >= 0) {
+								this.activeBlockIndex = blockIndex;
+								if (!this.blocks[blockIndex]) this.set('blocks.' + blockIndex, {name: block});
+
+								if (block === 'static') {
+									if (!this.blocks[blockIndex].value) this.set('blocks.' + blockIndex + '.value', '<p>&nbsp;</p>');
+									this.$.editor.value = this.blocks[blockIndex].value;
+									this.$.editor.opened = true;
+								}
+							}
+						},
+						100
+					);
         },
         _rowsChanged: function () {
         	this.async(
@@ -191,7 +211,7 @@
         	var blockIndex = this._blockIndex(rowIndex, columnIndex);
 
 					if (blockIndex >= 0 && this.blocks[blockIndex]) {
-						var name = this.blocks[blockIndex];
+						var name = this.blocks[blockIndex].name;
 
 						for (var i = 0; i < this.blockTypes.length; i += 1) {
 							if (this.blockTypes[i].name === name) return this.blockTypes[i].description;
@@ -204,13 +224,22 @@
         	var blockName = 'none', blockIndex = this._blockIndex(rowIndex, columnIndex);
 
 					if (blockIndex >= 0 && this.blocks[blockIndex]) {
-						blockName = this.blocks[blockIndex];
+						blockName = this.blocks[blockIndex].name;
 					}
 
 					return blockName;
         },
         _blocksChanged: function () {
         	if (!Array.isArray(this.blocks)) this.blocks = [];
+        },
+        _activeBlockSave: function (event) {
+        	if (this.activeBlockIndex >= 0) {
+        		this.set('blocks.' + this.activeBlockIndex + '.value', event.detail.value);
+        		this.activeBlockIndex = null
+        	}
+        },
+        _activeBlockCancel: function (event) {
+					if (this.activeBlockIndex >= 0) this.activeBlockIndex = null;
         }
 			}
 		);

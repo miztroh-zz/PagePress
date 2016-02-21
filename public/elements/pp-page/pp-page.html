@@ -100,17 +100,13 @@
 			}
 		</style>
 		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" id="pages"></firebase-collection>
-		<firebase-collection location="[[_pageLocation(key)]]" id="page" data="{{_page}}"></firebase-collection>
+		<firebase-collection location="[[_pageLocation(error, path, key)]]" id="page" data="{{_page}}"></firebase-collection>
 		<firebase-document location="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
 		<firebase-collection location="[[layoutRowsUrl]]" data="{{rows}}"></firebase-collection>
+		<firebase-document location="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
 		<iron-page-url path="{{path}}" url-space-regex="^(?!/dashboard/)"></iron-page-url>
     <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
 		<div id="container">
-			<div id="error404" hidden$="[[page]]">
-				<h1>
-					<span hidden$="[[!error]]">404</span>
-				</h1>
-			</div>
 			<div id="page" hidden$="[[!page]]">
 				<div id="rows">
 					<template is="dom-repeat" items="[[rows]]" as="row" index-as="rowIndex">
@@ -118,7 +114,10 @@
 							<template is="dom-repeat" items="[[row.columns]]" as="column" index-as="columnIndex">
 								<div class="column" column-width$="[[column.width]]">
 									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'dynamic')]]">
-										<div inner-h-t-m-l="[[_blockDynamicHTML(rowIndex, columnIndex)]]"></div>
+										<div inner-h-t-m-l="[[_blockHTML(rowIndex, columnIndex)]]"></div>
+									</template>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'static')]]">
+										<div inner-h-t-m-l="[[_blockStaticHTML(rowIndex, columnIndex)]]"></div>
 									</template>
 									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-left')]]">
 										<h1>[[page.title]]</h1>
@@ -176,6 +175,13 @@
 					},
           minWidth768px: {
             type: Boolean
+          },
+          typeBlocksUrl: {
+          	type: String,
+          	computed: '_computeTypeBlocksUrl(page.*)'
+          },
+          typeBlocks: {
+          	type: Array
           }
 				},
 				ready: function () {
@@ -250,6 +256,8 @@
 					);
 				},
 				_pageLocation: function () {
+					if (this.error) return 'https://ss16-page-press.firebaseio.com/error-page';
+					if (this.path === '/') return 'https://ss16-page-press.firebaseio.com/home-page';
 					if (!this.key) return '';
 					return 'https://ss16-page-press.firebaseio.com/pages/' + this.key;
 				},
@@ -281,8 +289,8 @@
         _blockIs: function (rowIndex, columnIndex, name) {
         	return this._blockName(rowIndex, columnIndex) === name;
         },
-        _blockDynamicHTML: function (rowIndex, columnIndex) {
-        	if (this._blockIs(rowIndex, columnIndex, 'dynamic')) {
+        _blockHTML: function (rowIndex, columnIndex) {
+        	if (this._blockIs(rowIndex, columnIndex, 'dynamic') || this._blockIs(rowIndex, columnIndex, 'static')) {
         		return (this.page.blocks[this._blockIndex(rowIndex, columnIndex)] && this.page.blocks[this._blockIndex(rowIndex, columnIndex)].value) ? this.page.blocks[this._blockIndex(rowIndex, columnIndex)].value : '';
         	} else {
         		return '';
@@ -291,6 +299,11 @@
         _justification: function (justification) {
           if (!this.minWidth768px) return '';
           return 'layout horizontal ' + justification;
+        },
+        _blockStaticHTML: function (rowIndex, columnIndex) {
+        	var block = this.page.blocks[this._blockIndex(rowIndex, columnIndex)];
+        	if (block.name === 'static' && block.index >= 0 && block.type) return this.typeBlocks[block.index].value;
+        	return '';
         }
 			}
 		);
