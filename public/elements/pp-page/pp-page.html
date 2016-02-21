@@ -15,9 +15,9 @@
 		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" id="pages"></firebase-collection>
 		<firebase-collection location="[[_pageLocation(key)]]" id="page" data="{{_page}}"></firebase-collection>
 		<iron-page-url path="{{path}}" url-space-regex="^(?!/dashboard/)"></iron-page-url>
-		<h1>PagePress</h1>
-		<a href="/lorem-ipsum/">Lorem Ipsum</a>
-		<a href="/jibba/jabba">Jabba</a>
+		<div id="error404" hidden$="[[page]]">
+			<h1>404</h1>
+		</div>
 	</template>
 	<script>
 		Polymer(

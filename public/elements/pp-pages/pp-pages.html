@@ -1,20 +1,56 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <link rel="import" href="/bower_components/iron-list/iron-list.html">
+<link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="/bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="/bower_components/iron-icons/image-icons.html">
+<link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/elements/pp-page-editor/pp-page-editor.html">
 <dom-module id="pp-pages">
 	<template>
 		<style>
 			:host {
 				display: block;
 			}
+
+			@media (min-width: 768px) {
+				.page {
+					@apply(--layout-horizontal);
+				}
+			}
+
+			@media (max-width: 767px) {
+				.page {
+					@apply(--layout-vertical);
+				}
+			}
+
+			.page:nth-child(even) {
+				background: #f5f5f5;
+			}
+
+			#add {
+				margin-bottom: 15px;
+			}
 		</style>
 		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" data="{{pages}}"></firebase-collection>
 		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-types" data="{{types}}"></firebase-collection>
-		<iron-list style="height: 500px;" items="[[pages]]" as="page">
+		<paper-toast id="toast"></paper-toast>
+		<paper-button id="add" on-tap="add">Add</paper-button>
+		<iron-list items="[[orderedPages]]" as="page">
 			<template>
-				<div class="horizontal layout">
-					<div>[[page.title]]</div>
+			<div class="page">
+				<div style="padding: 15px;"><template is="dom-repeat" items="[[page.ancestors]]" as="ancestor">—&nbsp;</template>[[page.title]]</div>
+				<div class="flex"></div>
+				<div class="horizontal layout" style="padding: 5px;">
+					<paper-icon-button icon="image:edit" on-tap="_editPage" page-index$="[[index]]"></paper-icon-button>
+					<paper-icon-button icon="open-in-new" on-tap="_viewPage" page-index$="[[index]]"></paper-icon-button>
+					<paper-icon-button icon="delete" on-tap="_deletePage" page-index$="[[index]]"></paper-icon-button>
 				</div>
+			</div>
 			</template>
 		</iron-list>
 	</template>
@@ -26,8 +62,139 @@
 					pages: {
 						type: Array
 					},
+					orderedPages: {
+						type: Array
+					},
 					types: {
 						type: Array
+					},
+					page: {
+						type: Object
+					}
+				},
+				observers: [
+					'_pagesChanged(pages.*)'
+				],
+        add: function () {
+					this.page = {};
+					this.$.editor.open();
+        },
+				_pagesChanged: function () {
+					this.async(
+						function () {
+							var pagesHierarchical = [], childPages = [], pagesById = {};
+
+							for (var i = 0; i < this.pages.length; i += 1) {
+								var srcPage = this.pages[i], srcPageKeys = Object.keys(srcPage);
+								var newPage = {children: [], ancestors: []};
+
+								for (var j = 0; j < srcPageKeys.length; j += 1) {
+									newPage[srcPageKeys[j]] = srcPage[srcPageKeys[j]];
+								}
+
+								pagesById[srcPage.__firebaseKey__] = newPage;
+
+								if (!newPage.parent) {
+									pagesHierarchical.push(newPage);
+								} else {
+									childPages.push(newPage);
+								}
+							}
+
+							for (i = 0; i < childPages.length; i += 1) {
+								pagesById[childPages[i].parent].children.push(childPages[i]);
+
+								(
+									function (page) {
+										var ancestor = pagesById[page.parent];
+
+										while (ancestor) {
+											page.ancestors.push(ancestor);
+											ancestor = pagesById[ancestor.parent];
+										}
+									}
+								)(childPages[i]);
+							}
+
+							var pagesFlat = [];
+
+							function flattenPages (pages) {
+								for (var i = 0; i < pages.length; i += 1) {
+									pagesFlat.push(pages[i]);
+
+									if (pages[i].children.length) {
+										var childrenByTitle = {};
+
+										for (var j = 0; j < pages[i].children.length; j += 1) {
+											if (!childrenByTitle[pages[i].children[j].title]) childrenByTitle[pages[i].children[j].title] = [];
+											childrenByTitle[pages[i].children[j].title].push(pages[i].children[j]);
+										}
+
+										var titles = Object.keys(childrenByTitle);
+										titles.sort();
+										var children = [];
+
+										for (j = 0; j < titles.length; j += 1) {
+											for (var k = 0; k < childrenByTitle[titles[j]].length; k += 1) {
+												children.push(childrenByTitle[titles[j]][k]);
+											}
+										}
+
+										flattenPages(children);
+									}
+								}
+							}
+
+							//console.log(pagesHierarchical);
+							flattenPages(pagesHierarchical);
+							//console.log(pagesFlat);
+							this.orderedPages = pagesFlat;
+						},
+						1000
+					);
+				},
+				_viewPage: function (event) {
+					var target = Polymer.dom(event).localTarget, index = +target.getAttribute('page-index');
+
+					if (index >= 0) {
+						var page = this.orderedPages[index];
+
+						if (page) {
+							var path = '/';
+
+							for (var i = page.ancestors.length - 1; i >= 0; i -= 1) {
+								path += page.ancestors[i].slug + '/';
+							}
+
+							path += page.slug + '/';
+							window.open(path);
+						}
+					}
+				},
+				_deletePage: function (event) {
+					var target = Polymer.dom(event).localTarget, index = +target.getAttribute('page-index');
+
+					if (index >= 0) {
+						var page = this.orderedPages[index];
+
+						if (page) {
+							var pageIndexesByFirebaseKey = {};
+
+							for (var i = 0; i < this.pages.length; i += 1) {
+								pageIndexesByFirebaseKey[this.pages[i].__firebaseKey__] = i;
+							}
+
+							var pageIndex = pageIndexesByFirebaseKey[page.__firebaseKey__];
+
+							for (i = 0; i < page.children.length; i += 1) {
+								var childIndex = pageIndexesByFirebaseKey[page.children[i].__firebaseKey__];
+								this.set('pages.' + childIndex + '.parent', this.pages[pageIndex].parent);
+							}
+
+							this.splice('pages', pageIndex, 1);
+							this.$.toast.text = 'Page deleted';
+							this.$.toast.open();
+						}
 					}
 				}
 			}

@@ -57,7 +57,7 @@
     <paper-drawer-panel force-narrow id="drawerPanel" hidden$="[[!user]]">
       <paper-header-panel drawer>
         <paper-toolbar>
-          <div>Navigation</div>
+          <div class="title" style="line-height: 22px; margin-left: 0;"><strong><em>PagePress</em></strong>&nbsp;Navigation</div>
         </paper-toolbar>
         <div class="fit vertical layout">
         	<div id="navigation" on-tap="_closeDrawer">
@@ -83,7 +83,7 @@
       <paper-header-panel main>
         <paper-toolbar>
           <paper-icon-button icon="menu" paper-drawer-toggle></paper-icon-button>
-          <div>Dashboard</div>
+          <div class="title" style="line-height: 22px;"><strong><em>PagePress</em></strong>&nbsp;Dashboard</div>
         </paper-toolbar>
         <iron-pages selected="[[page]]" attr-for-selected="page">
         	<section page="Overview">
@@ -91,15 +91,24 @@
         		<p>Welcome!  PagePress aims to be a content management system (CMS) reimagined as a single-page application (SPA).</p>
         	</section>
         	<section page="Page Layouts">
-        		<h1>Page Layouts</h1>
+        		<div class="horizontal layout">
+        			<h1 class="self-center">Page Layouts</h1>
+        			<paper-icon-button icon="help" class="self-center"></paper-icon-button>
+        		</div>
         		<pp-page-layouts></pp-page-layouts>
         	</section>
         	<section page="Page Types">
-        		<h1>Page Types</h1>
+        		<div class="horizontal layout">
+        			<h1 class="self-center">Page Types</h1>
+        			<paper-icon-button icon="help" class="self-center"></paper-icon-button>
+        		</div>
         		<pp-page-types></pp-page-types>
         	</section>
         	<section page="Pages">
-        		<h1>Pages</h1>
+        		<div class="horizontal layout">
+        			<h1 class="self-center">Pages</h1>
+        			<paper-icon-button icon="help" class="self-center"></paper-icon-button>
+        		</div>
         		<pp-pages></pp-pages>
         	</section>
         </iron-pages>
