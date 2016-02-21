@@ -1,0 +1,36 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
+<link rel="import" href="/bower_components/iron-list/iron-list.html">
+<dom-module id="pp-pages">
+	<template>
+		<style>
+			:host {
+				display: block;
+			}
+		</style>
+		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" data="{{pages}}"></firebase-collection>
+		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-types" data="{{types}}"></firebase-collection>
+		<iron-list style="height: 500px;" items="[[pages]]" as="page">
+			<template>
+				<div class="horizontal layout">
+					<div>[[page.title]]</div>
+				</div>
+			</template>
+		</iron-list>
+	</template>
+	<script>
+		Polymer(
+			{
+				is: 'pp-pages',
+				properties: {
+					pages: {
+						type: Array
+					},
+					types: {
+						type: Array
+					}
+				}
+			}
+		);
+	</script>
+</dom-module>

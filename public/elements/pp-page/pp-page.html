@@ -1,0 +1,101 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/font-roboto/roboto.html">
+<link rel="import" href="/bower_components/iron-page-url/iron-page-url.html">
+<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
+<dom-module id="pp-page">
+	<template>
+		<style>
+			:host {
+				display: block;
+				font-family: Roboto;
+				width: 100vw;
+				height: 100vh;
+			}
+		</style>
+		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" id="pages"></firebase-collection>
+		<firebase-collection location="[[_pageLocation(key)]]" id="page" data="{{_page}}"></firebase-collection>
+		<iron-page-url path="{{path}}" url-space-regex="^(?!/dashboard/)"></iron-page-url>
+		<h1>PagePress</h1>
+		<a href="/lorem-ipsum/">Lorem Ipsum</a>
+		<a href="/jibba/jabba">Jabba</a>
+	</template>
+	<script>
+		Polymer(
+			{
+				is: 'pp-page',
+				properties: {
+					path: {
+						type: String,
+						observer: '_pathChanged'
+					},
+					key: {
+						type: String,
+						value: null
+					},
+					page: {
+						type: Object,
+						notify: true
+					},
+					_page: {
+						type: Array,
+						observer: '__pageChanged'
+					}
+				},
+				_pathChanged: function () {
+					this.key = '';
+					var path = this.path.split('/'), index = -1;
+					path = path.slice(1, path.length - 1);
+
+					var findPage = function (parent, slug, callback) {
+						this.$.pages.query.orderByChild('parent').equalTo(parent).on('child_added', callback);
+					}.bind(this);
+
+					var callback = function () {
+						var firstSnapshot;
+
+						return function (snapshot) {
+							if (snapshot && !firstSnapshot) {
+								var parent = snapshot.child('parent').val(), slug = snapshot.child('slug').val(), key = snapshot.key();
+
+								if (slug === path[index + 1]) {
+									firstSnapshot = true;
+									index += 1;
+
+									if (index + 1 < path.length) {
+										findPage(key, path[index + 1], callback());
+									} else {
+										this.key = key;
+									}
+								}
+							}
+						}.bind(this);
+					}.bind(this);
+
+					findPage('', path[0], callback());
+				},
+				__pageChanged: function () {
+					this.async(
+						function () {
+							if (this._page.length) {
+								var page = {};
+
+								for (var i = 0; i < this._page.length; i += 1) {
+									page[this._page[i].__firebaseKey__] = this._page[i].value;
+								}
+
+								this.page = page;
+							} else {
+								this.page = null;
+							}
+						},
+						100
+					);
+				},
+				_pageLocation: function () {
+					if (!this.key) return '';
+					return 'https://ss16-page-press.firebaseio.com/pages/' + this.key;
+				}
+			}
+		);
+	</script>
+</dom-module>

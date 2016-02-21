@@ -11,8 +11,10 @@
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-auth.html">
+<link rel="import" href="/bower_components/iron-page-url/iron-page-url.html">
 <link rel="import" href="/elements/pp-page-layouts/pp-page-layouts.html">
 <link rel="import" href="/elements/pp-page-types/pp-page-types.html">
+<link rel="import" href="/elements/pp-pages/pp-pages.html">
 <dom-module id="pp-dashboard">
   <template>
     <style>
@@ -22,10 +24,6 @@
         height: 100vh;
         font-family: Roboto;
       }
-
-			paper-listbox paper-item:hover {
-				cursor: pointer;
-			}
 
 			iron-pages {
 				padding: 20px;
@@ -43,19 +41,39 @@
 				margin: 0;
 				border-radius: 0;
 			}
+
+			#navigation a {
+				display: block;
+				color: inherit;
+				text-decoration: none;
+			}
+
+			#navigation paper-item[selected] {
+				font-weight: bold;
+			}
     </style>
     <firebase-auth location="https://ss16-page-press.firebaseio.com" user="{{user}}" provider="google" id="auth"></firebase-auth>
+    <iron-page-url path="{{path}}" url-space-regex="^/dashboard/"></iron-page-url>
     <paper-drawer-panel force-narrow id="drawerPanel" hidden$="[[!user]]">
       <paper-header-panel drawer>
         <paper-toolbar>
           <div>Navigation</div>
         </paper-toolbar>
         <div class="fit vertical layout">
-	        <paper-listbox selected="{{page}}" attr-for-selected="page">
-	        	<paper-item page="Overview">Overview</paper-item>
-	        	<paper-item page="Page Layouts">Page Layouts</paper-item>
-	        	<paper-item page="Page Types">Page Types</paper-item>
-	        </paper-listbox>
+        	<div id="navigation" on-tap="_closeDrawer">
+		        <a href="/dashboard/">
+		        	<paper-item page="Overview" selected$="[[_equalTo(page, 'Overview')]]">Overview</paper-item>
+		        </a>
+		        <a href="/dashboard/page-layouts/">
+		        	<paper-item page="Page Layouts" selected$="[[_equalTo(page, 'Page Layouts')]]">Page Layouts</paper-item>
+		        </a>
+		        <a href="/dashboard/page-types/">
+		        	<paper-item page="Page Types" selected$="[[_equalTo(page, 'Page Types')]]">Page Types</paper-item>
+		        </a>
+		        <a href="/dashboard/pages/">
+		        	<paper-item page="Pages" selected$="[[_equalTo(page, 'Pages')]]">Pages</paper-item>
+		        </a>
+		       </div>
 	        <div class="flex"></div>
 	        <div class="horizontal layout">
 	        	<paper-button id="logout" class="flex" on-tap="logout">Log Out</paper-button>
@@ -70,6 +88,7 @@
         <iron-pages selected="[[page]]" attr-for-selected="page">
         	<section page="Overview">
         		<h1>Overview</h1>
+        		<p>Welcome!  PagePress aims to be a content management system (CMS) reimagined as a single-page application (SPA).</p>
         	</section>
         	<section page="Page Layouts">
         		<h1>Page Layouts</h1>
@@ -78,6 +97,10 @@
         	<section page="Page Types">
         		<h1>Page Types</h1>
         		<pp-page-types></pp-page-types>
+        	</section>
+        	<section page="Pages">
+        		<h1>Pages</h1>
+        		<pp-pages></pp-pages>
         	</section>
         </iron-pages>
       </paper-header-panel>
@@ -91,25 +114,12 @@
       {
         is: 'pp-dashboard',
         properties: {
+					path: {
+						type: String,
+						observer: '_pathChanged'
+					},
         	page: {
-        		type: String,
-        		value: function () {
-        			var page = 'Overview';
-
-        			switch (window.location.pathname) {
-        				case '/dashboard/page-layouts/':
-        				case '/dashboard/page-layouts':
-        					page = 'Page Layouts';
-        					break;
-        				case '/dashboard/page-types/':
-        				case '/dashboard/page-types':
-        					page = 'Page Types';
-        					break;
-        			}
-
-							return page;
-        		},
-        		observer: '_pageChanged'
+        		type: String
         	},
         	user: {
         		type: Object
@@ -128,21 +138,29 @@
 				logout: function () {
 					if (this.user) this.$.auth.logout();
 				},
-        _pageChanged: function () {
-        	var path = '/dashboard/';
-
-        	switch (this.page) {
-        		case 'Page Layouts':
-        			path += 'page-layouts/';
-        			break;
-        		case 'Page Types':
-        			path += 'page-types/';
-        			break;
-        	}
-
-					history.pushState(null, null, path);
+        _closeDrawer: function () {
 					this.$.drawerPanel.closeDrawer();
-        }
+        },
+        _pathChanged: function () {
+					var page = 'Overview';
+
+					switch (this.path) {
+						case '/dashboard/page-layouts/':
+							page = 'Page Layouts';
+							break;
+						case '/dashboard/page-types/':
+							page = 'Page Types';
+							break;
+						case '/dashboard/pages/':
+							page = 'Pages';
+							break;
+					}
+
+					this.page = page;
+				},
+				_equalTo: function (a, b) {
+					return a === b;
+				}
       }
     );
   </script>
