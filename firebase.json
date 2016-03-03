@@ -1,15 +1,15 @@
 {
 	"firebase": "ss16-page-press",
-	"public": "public",
 	"ignore": [
 		"firebase.json",
+		"firebase-debug.log",
 		"**/.*",
 		"**/node_modules/**"
 	],
 	"rewrites": [
 		{
 			"source": "!/dashboard/*",
-			"destination": "/index.html"
+			"destination": "/page.html"
 		},
 		{
 			"source": "/dashboard/*",

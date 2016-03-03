@@ -1,0 +1,310 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/font-roboto/roboto.html">
+<link rel="import" href="/bower_components/iron-page-url/iron-page-url.html">
+<link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
+<link rel="import" href="/bower_components/firebase-element/firebase-document.html">
+<link rel="import" href="/bower_components/iron-media-query/iron-media-query.html">
+<dom-module id="pp-page">
+	<template>
+		<style>
+			:host {
+				display: block;
+				font-family: Roboto;
+				width: 100vw;
+				height: 100vh;
+			}
+
+			@media (min-width: 768px) {
+				#page {
+					width: 750px;
+				}
+			}
+
+			@media (min-width: 992px) {
+				#page {
+					width: 970px;
+				}
+			}
+
+			@media (min-width: 1200px) {
+				#page {
+					width: 1170px;
+				}
+			}
+
+			#page > * > :first-child {
+				margin-top: 0;
+			}
+
+			#page > * > :last-child {
+				margin-bottom: 0;
+			}
+
+			#rows {
+				margin: 15px -15px;
+				padding: 15px 5px;
+			}
+
+			.column {
+				padding: 0 15px;
+			}
+
+      @media (min-width: 768px) {
+        .column[column-width="1"] {
+          width: calc((100% / 12 * 1) - 2px);
+        }
+
+        .column[column-width="2"] {
+          width: calc((100% / 12 * 2) - 2px);
+        }
+
+        .column[column-width="3"] {
+          width: calc((100% / 12 * 3) - 2px);
+        }
+
+        .column[column-width="4"] {
+          width: calc((100% / 12 * 4) - 2px);
+        }
+
+        .column[column-width="5"] {
+          width: calc((100% / 12 * 5) - 2px);
+        }
+
+        .column[column-width="6"] {
+          width: calc((100% / 12 * 6) - 2px);
+        }
+
+        .column[column-width="7"] {
+          width: calc((100% / 12 * 7) - 2px);
+        }
+
+        .column[column-width="8"] {
+          width: calc((100% / 12 * 8) - 2px);
+        }
+
+        .column[column-width="9"] {
+          width: calc((100% / 12 * 9) - 2px);
+        }
+
+        .column[column-width="10"] {
+          width: calc((100% / 12 * 10) - 2px);
+        }
+
+        .column[column-width="11"] {
+          width: calc((100% / 12 * 11) - 2px);
+        }
+
+        .column[column-width="12"] {
+          width: calc((100% / 12 * 12) - 2px);
+        }
+
+				.column .dropdown-trigger {
+					@apply(--layout-fit);
+				}
+      }
+
+			@media (max-width: 767px) {
+				.column {
+					display: block;
+				}
+			}
+
+			a {
+				color: #2a9af2;
+			}
+		</style>
+		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" id="pages"></firebase-collection>
+		<firebase-document location="[[_pageLocation(path, key)]]" data="{{page}}"></firebase-document>
+		<firebase-document location="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
+		<firebase-collection location="[[layoutRowsUrl]]" data="{{rows}}"></firebase-collection>
+		<firebase-document location="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
+		<iron-page-url path="{{path}}" url-space-regex="^(?!/dashboard/)"></iron-page-url>
+    <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
+		<div id="container" class="horizontal layout center-justified">
+			<div id="page" hidden$="[[!page]]">
+				<div id="rows">
+					<template is="dom-repeat" items="[[rows]]" as="row" index-as="rowIndex">
+						<div class$="row [[_justification(row.justification, minWidth768px)]]">
+							<template is="dom-repeat" items="[[row.columns]]" as="column" index-as="columnIndex">
+								<div class="column" column-width$="[[column.width]]">
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'dynamic')]]">
+										<div inner-h-t-m-l="[[_blockHTML(rowIndex, columnIndex, page.*)]]"></div>
+									</template>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'static')]]">
+										<div inner-h-t-m-l="[[_blockStaticHTML(rowIndex, columnIndex, typeBlocks.*)]]"></div>
+									</template>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-left')]]">
+										<h1>[[page.title]]</h1>
+									</template>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-center')]]">
+										<h1 style="text-align: center;">[[page.title]]</h1>
+									</template>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-right')]]">
+										<h1 style="text-align: right;">[[page.title]]</h1>
+									</template>
+								</div>
+							</template>
+						</div>
+					</template>
+				</div>
+			</div>
+		</div>
+	</template>
+	<script>
+		Polymer(
+			{
+				is: 'pp-page',
+				properties: {
+					path: {
+						type: String,
+						observer: '_pathChanged'
+					},
+					key: {
+						type: String,
+						value: null
+					},
+					page: {
+						type: Object
+					},
+					typeLayoutUrl: {
+						type: String,
+						computed: '_computeTypeLayoutUrl(page.type)'
+					},
+					layout: {
+						type: String
+					},
+					layoutRowsUrl: {
+						type: String,
+						computed: '_computeLayoutRowsUrl(layout)'
+					},
+					rows: {
+						type: Array
+					},
+          minWidth768px: {
+            type: Boolean
+          },
+          typeBlocksUrl: {
+          	type: String,
+          	computed: '_computeTypeBlocksUrl(page.type)'
+          },
+          typeBlocks: {
+          	type: Array
+          }
+				},
+				ready: function () {
+					this.scopeSubtree(this.$.rows, true);
+				},
+				_computeTypeLayoutUrl: function () {
+					return (this.page && this.page.type) ? 'https://ss16-page-press.firebaseio.com/page-types/' + this.page.type + '/layout' : '';
+				},
+				_computeTypeBlocksUrl: function () {
+					return (this.page && this.page.type) ? 'https://ss16-page-press.firebaseio.com/page-types/' + this.page.type + '/blocks' : '';
+				},
+				_computeLayoutRowsUrl: function () {
+					return this.layout ? 'https://ss16-page-press.firebaseio.com/page-layouts/' + this.layout + '/rows' : '';
+				},
+				observers: [
+					'_pageTitleChanged(page.title)'
+				],
+				_equalTo: function (a, b) {
+					return a === b;
+				},
+				_pathChanged: function () {
+					//Make sure path ends in a slash
+					if (this.path.charAt(this.path.length - 1) !== '/') {
+						this.path += '/';
+						history.replaceState(null, null, this.path);
+						return;
+					}
+
+					//If path is not a dashboard path, reload
+					if (this.path.substring(0, 11) === '/dashboard/') {
+						window.location.reload();
+						return;
+					}
+
+					this.key = '';
+					var path = this.path.split('/'), index = -1;
+					path = path.slice(1, path.length - 1);
+
+					var findPage = function (parent, slug, callback) {
+						this.$.pages.query.orderByChild('parent').equalTo(parent).on('child_added', callback);
+					}.bind(this);
+
+					var callback = function () {
+						var firstSnapshot;
+
+						return function (snapshot) {
+							if (snapshot && !firstSnapshot) {
+								var parent = snapshot.child('parent').val(), slug = snapshot.child('slug').val(), key = snapshot.key();
+
+								if (slug === path[index + 1]) {
+									firstSnapshot = true;
+									index += 1;
+
+									if (index + 1 < path.length) {
+										findPage(key, path[index + 1], callback());
+									} else {
+										this.key = key;
+									}
+								}
+							}
+						}.bind(this);
+					}.bind(this);
+
+					findPage('', path[0], callback());
+				},
+				_pageLocation: function () {
+					if (this.path === '/') return 'https://ss16-page-press.firebaseio.com/home-page';
+					if (!this.key) return 'https://ss16-page-press.firebaseio.com/error-page';
+					return 'https://ss16-page-press.firebaseio.com/pages/' + this.key;
+				},
+				_pageTitleChanged: function () {
+					document.title = (this.page && this.page.title) ? this.page.title : '404';
+				},
+        _blockIndex: function (rowIndex, columnIndex) {
+					var blockIndex = -1;
+
+					if (this.rows.length) {
+						for (var i = 0; i <= rowIndex; i += 1) {
+							for (var j = 0; j < (i === rowIndex ? columnIndex + 1 : this.rows[i].columns.length); j += 1) {
+								blockIndex += 1;
+							}
+						}
+					}
+
+					return blockIndex;
+        },
+        _blockName: function (rowIndex, columnIndex) {
+        	var blockIndex = this._blockIndex(rowIndex, columnIndex);
+
+					if (blockIndex >= 0 && this.page && this.page.blocks[blockIndex]) {
+						return this.page.blocks[blockIndex].name;
+					}
+
+					return 'none';
+        },
+        _blockIs: function (rowIndex, columnIndex, name) {
+        	return this._blockName(rowIndex, columnIndex) === name;
+        },
+        _blockHTML: function (rowIndex, columnIndex) {
+        	if (this._blockIs(rowIndex, columnIndex, 'dynamic') || this._blockIs(rowIndex, columnIndex, 'static')) {
+        		return (this.page.blocks[this._blockIndex(rowIndex, columnIndex)] && this.page.blocks[this._blockIndex(rowIndex, columnIndex)].value) ? this.page.blocks[this._blockIndex(rowIndex, columnIndex)].value : '';
+        	} else {
+        		return '';
+        	}
+        },
+        _justification: function (justification) {
+          if (!this.minWidth768px) return '';
+          return 'layout horizontal ' + justification;
+        },
+        _blockStaticHTML: function (rowIndex, columnIndex) {
+        	var block = this.page.blocks[this._blockIndex(rowIndex, columnIndex)];
+        	if (block.name === 'static' && block.index >= 0 && block.type && this.typeBlocks[block.index].value) return this.typeBlocks[block.index].value;
+        	return '';
+        }
+			}
+		);
+	</script>
+</dom-module>
