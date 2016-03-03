@@ -1,5 +1,5 @@
 {
-	"firebase": "ss16-page-press",
+	"firebase": "pagepress",
 	"ignore": [
 		"firebase.json",
 		"firebase-debug.log",
