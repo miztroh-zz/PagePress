@@ -1,6 +1,7 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-document.html">
 <link rel="import" href="/bower_components/iron-media-query/iron-media-query.html">
@@ -98,6 +99,7 @@
 				cursor: pointer;
 			}
 		</style>
+		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
     <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
 		<firebase-document location="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
 		<firebase-document location="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
@@ -125,26 +127,33 @@
 					PagePress.BlockTypesBehavior
 				],
 				properties: {
+					firebaseJson: {
+						type: Object
+					},
+					firebaseUrl: {
+						type: String,
+						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
+					},
 					type: {
 						type: String
 					},
 					typeLayoutUrl: {
 						type: String,
-						computed: '_computeTypeLayoutUrl(type)'
+						computed: '_computeTypeLayoutUrl(firebaseUrl, type)'
 					},
 					layout: {
 						type: String
 					},
 					typeBlocksUrl: {
 						type: String,
-						computed: '_computeTypeBlocksUrl(type)'
+						computed: '_computeTypeBlocksUrl(firebaseUrl, type)'
 					},
 					typeBlocks: {
 						type: Array
 					},
 					layoutRowsUrl: {
 						type: String,
-						computed: '_computeLayoutRowsUrl(layout)'
+						computed: '_computeLayoutRowsUrl(firebaseUrl, layout)'
 					},
 					rows: {
 						type: Array
@@ -163,14 +172,17 @@
             type: Boolean
           }
 				},
+				_computeFirebaseUrl: function () {
+					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
+				},
 				_computeTypeLayoutUrl: function () {
-					return this.type ? 'https://ss16-page-press.firebaseio.com/page-types/' + this.type + '/layout' : '';
+					if (this.firebaseUrl && this.type) return this.firebaseUrl + 'page-types/' + this.type + '/layout';
 				},
 				_computeTypeBlocksUrl: function () {
-					return this.type ? 'https://ss16-page-press.firebaseio.com/page-types/' + this.type + '/blocks' : '';
+					if (this.firebaseUrl && this.type) return this.firebaseUrl + 'page-types/' + this.type + '/blocks';
 				},
 				_computeLayoutRowsUrl: function () {
-					return this.layout ? 'https://ss16-page-press.firebaseio.com/page-layouts/' + this.layout + '/rows' : '';
+					if (this.firebaseUrl && this.layout) return this.firebaseUrl + 'page-layouts/' + this.layout + '/rows';
 				},
         _justification: function (justification) {
           if (!this.minWidth768px) return '';

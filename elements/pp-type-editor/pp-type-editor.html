@@ -5,6 +5,7 @@
 <link rel="import" href="/bower_components/paper-menu-button/paper-menu-button.html">
 <link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="/bower_components/paper-item/paper-item.html">
+<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <link rel="import" href="/elements/pp-block-types-behavior/pp-block-types-behavior.html">
 <link rel="import" href="/elements/pp-wysiwyg/pp-wysiwyg.html">
@@ -96,6 +97,7 @@
 				color: white;
 			}
 		</style>
+		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
     <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
 		<firebase-collection location="[[url]]" data="{{rows}}"></firebase-collection>
 		<div id="rows">
@@ -128,13 +130,20 @@
 					PagePress.BlockTypesBehavior
 				],
 				properties: {
+					firebaseJson: {
+						type: Object
+					},
+					firebaseUrl: {
+						type: String,
+						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
+					},
 					layout: {
 						type: String,
 						observer: '_layoutChanged'
 					},
 					url: {
 						type: String,
-						computed: '_computeUrl(layout)'
+						computed: '_computeUrl(firebaseUrl, layout)'
 					},
 					rows: {
 						type: Object,
@@ -152,8 +161,11 @@
           	type: Number
           }
 				},
+				_computeFirebaseUrl: function () {
+					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
+				},
 				_computeUrl: function () {
-					return this.layout ? 'https://ss16-page-press.firebaseio.com/page-layouts/' + this.layout + '/rows' : '';
+					if (this.firebaseUrl && this.layout) return this.firebaseUrl + 'page-layouts/' + this.layout + '/rows';
 				},
         _justification: function (justification) {
           if (!this.minWidth768px) return '';

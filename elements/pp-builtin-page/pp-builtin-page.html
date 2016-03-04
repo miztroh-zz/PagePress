@@ -6,6 +6,7 @@
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/elements/pp-page-editor/pp-page-editor.html">
 <dom-module id="pp-builtin-page">
 	<template>
@@ -40,8 +41,9 @@
 				--paper-input-container-invalid-color: #d23f31;
 			}
 		</style>
-		<firebase-document location="[[_pageLocation(slug)]]" data="{{page}}"></firebase-document>
-		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-types" data="{{types}}"></firebase-collection>
+		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
+		<firebase-document location="[[pageUrl]]" data="{{page}}"></firebase-document>
+		<firebase-collection location="[[pageTypesUrl]]" data="{{types}}"></firebase-collection>
 		<paper-toast id="toast"></paper-toast>
 		<paper-material style="padding: 20px;">
 			<h2>[[page.title]]</h2>
@@ -75,6 +77,13 @@
 					'no-cancel-on-esc-key': ''
 				},
 				properties: {
+					firebaseJson: {
+						type: Object
+					},
+					firebaseUrl: {
+						type: String,
+						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
+					},
 					page: {
 						type: Object,
         		observer: '_pageChanged',
@@ -95,11 +104,24 @@
 					},
 					slug: {
 						type: String
+					},
+					pageUrl: {
+						type: String,
+						computed: '_computePageUrl(firebaseUrl, slug)'
+					},
+					pageTypesUrl: {
+						type: String,
+						computed: '_computePageTypesUrl(firebaseUrl)'
 					}
 				},
-				_pageLocation: function () {
-					if (!this.slug) return '';
-					return 'https://ss16-page-press.firebaseio.com/' + this.slug;
+				_computePageTypesUrl: function () {
+					if (this.firebaseUrl) return this.firebaseUrl + 'page-types/';
+				},
+				_computeFirebaseUrl: function () {
+					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
+				},
+				_computePageUrl: function () {
+					if (this.firebaseUrl && this.slug) return this.firebaseUrl + this.slug;
 				},
 				cancel: function () {
 					this.opened = false;

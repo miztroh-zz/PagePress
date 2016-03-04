@@ -8,6 +8,7 @@
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/elements/pp-type-editor/pp-type-editor.html">
 <dom-module id="pp-page-types">
   <template>
@@ -35,8 +36,9 @@
 				--paper-input-container-invalid-color: #d23f31;
 			}
     </style>
-		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-types" data="{{types}}" order-by-child="name"></firebase-collection>
-		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-layouts" data="{{layouts}}" order-by-child="name"></firebase-collection>
+		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
+		<firebase-collection location="[[pageTypesUrl]]" data="{{types}}" order-by-child="name"></firebase-collection>
+		<firebase-collection location="[[pageLayoutsUrl]]" data="{{layouts}}" order-by-child="name"></firebase-collection>
 		<paper-toast id="toast"></paper-toast>
 		<div class="layout horizontal">
 			<paper-dropdown-menu label="Type" always-float-label noink class="self-center">
@@ -70,6 +72,13 @@
       {
         is: 'pp-page-types',
         properties: {
+					firebaseJson: {
+						type: Object
+					},
+					firebaseUrl: {
+						type: String,
+						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
+					},
         	types: {
         		type: Array
         	},
@@ -93,6 +102,14 @@
         		value: function () {
         			return [];
         		}
+        	},
+        	pageTypesUrl: {
+        		type: String,
+        		computed: '_computePageTypesUrl(firebaseUrl)'
+        	},
+        	pageLayoutsUrl: {
+        		type: String,
+        		computed: '_computePageLayoutsUrl(firebaseUrl)'
         	}
         },
         add: function () {
@@ -150,6 +167,15 @@
 						}
 					}
         },
+				_computeFirebaseUrl: function () {
+					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
+				},
+				_computePageTypesUrl: function () {
+					if (this.firebaseUrl) return this.firebaseUrl + 'page-types/';
+				},
+				_computePageLayoutsUrl: function () {
+					if (this.firebaseUrl) return this.firebaseUrl + 'page-layouts/';
+				},
         _computeType: function () {
         	return this.types[this.index];
         },

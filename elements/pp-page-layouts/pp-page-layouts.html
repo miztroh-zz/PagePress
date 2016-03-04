@@ -8,6 +8,7 @@
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/elements/pp-layout-editor/pp-layout-editor.html">
 <dom-module id="pp-page-layouts">
   <template>
@@ -33,7 +34,8 @@
 				--paper-input-container-invalid-color: #d23f31;
 			}
     </style>
-		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-layouts" data="{{layouts}}" order-by-child="name"></firebase-collection>
+		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
+		<firebase-collection location="[[pageLayoutsUrl]]" data="{{layouts}}" order-by-child="name"></firebase-collection>
 		<paper-toast id="toast"></paper-toast>
 		<div class="layout horizontal">
 			<paper-dropdown-menu label="Layout" always-float-label noink class="self-center">
@@ -60,6 +62,13 @@
       {
         is: 'pp-page-layouts',
         properties: {
+					firebaseJson: {
+						type: Object
+					},
+					firebaseUrl: {
+						type: String,
+						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
+					},
         	layouts: {
         		type: Array
         	},
@@ -71,6 +80,10 @@
         		value: null,
         		computed: '_computeLayout(index)',
         		observer: '_layoutChanged'
+        	},
+        	pageLayoutsUrl: {
+        		type: String,
+        		computed: '_computePageLayoutsUrl(firebaseUrl)'
         	}
         },
         add: function () {
@@ -143,6 +156,12 @@
 						}
 					}
         },
+				_computeFirebaseUrl: function () {
+					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
+				},
+				_computePageLayoutsUrl: function () {
+					if (this.firebaseUrl) return this.firebaseUrl + 'page-layouts/';
+				},
         _computeLayout: function () {
         	return this.layouts[this.index];
         },

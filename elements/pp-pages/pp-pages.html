@@ -13,6 +13,7 @@
 <link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="/bower_components/paper-item/paper-item.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/elements/pp-page-editor/pp-page-editor.html">
 <link rel="import" href="/elements/pp-builtin-page/pp-builtin-page.html">
 <link rel="import" href="/elements/pp-builtin-page/pp-builtin-page.html">
@@ -61,8 +62,9 @@
 				--paper-input-container-invalid-color: #d23f31;
 			}
 		</style>
-		<firebase-collection location="https://ss16-page-press.firebaseio.com/pages" data="{{pages}}"></firebase-collection>
-		<firebase-collection location="https://ss16-page-press.firebaseio.com/page-types" data="{{types}}"></firebase-collection>
+		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
+		<firebase-collection location="[[pagesUrl]]" data="{{pages}}"></firebase-collection>
+		<firebase-collection location="[[pageTypesUrl]]" data="{{types}}"></firebase-collection>
 		<paper-toast id="toast"></paper-toast>
 		<div class="horizontal layout" style="margin-bottom: 15px;">
 			<paper-button on-tap="add">Add</paper-button>
@@ -105,6 +107,13 @@
 			{
 				is: 'pp-pages',
 				properties: {
+					firebaseJson: {
+						type: Object
+					},
+					firebaseUrl: {
+						type: String,
+						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
+					},
 					pages: {
 						type: Array
 					},
@@ -136,6 +145,14 @@
 					},
 					blocks: {
 						type: Array
+					},
+					pagesUrl: {
+						type: String,
+						computed: '_computePagesUrl(firebaseUrl)'
+					},
+					pageTypesUrl: {
+						type: String,
+						computed: '_computePageTypesUrl(firebaseUrl)'
 					}
 				},
 				observers: [
@@ -172,6 +189,15 @@
 					this.$.toast.text = 'Page changes discarded';
 					this.$.toast.open();
         },
+				_computeFirebaseUrl: function () {
+					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
+				},
+				_computePagesUrl: function () {
+					if (this.firebaseUrl) return this.firebaseUrl + 'pages/';
+				},
+				_computePageTypesUrl: function () {
+					if (this.firebaseUrl) return this.firebaseUrl + 'page-types/';
+				},
         _edit: function (event) {
 					var target = Polymer.dom(event).localTarget, index = +target.getAttribute('page-index');
 					if (index >= 0) this.index = this.pageIndexesByFirebaseKey[this.orderedPages[index].__firebaseKey__];

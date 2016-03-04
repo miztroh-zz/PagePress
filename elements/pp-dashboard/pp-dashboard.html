@@ -15,6 +15,7 @@
 <link rel="import" href="/bower_components/firebase-element/firebase-document.html">
 <link rel="import" href="/bower_components/iron-page-url/iron-page-url.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/elements/pp-page-layouts/pp-page-layouts.html">
 <link rel="import" href="/elements/pp-page-types/pp-page-types.html">
 <link rel="import" href="/elements/pp-pages/pp-pages.html">
@@ -72,8 +73,9 @@
 				color: white;
 			}
 		</style>
-		<firebase-auth location="https://ss16-page-press.firebaseio.com" user="{{user}}" provider="google" id="auth"></firebase-auth>
-		<firebase-document location="https://ss16-page-press.firebaseio.com/.info/connected" id="connection"></firebase-document>
+		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
+		<firebase-auth location="[[firebaseUrl]]" user="{{user}}" provider="google" id="auth"></firebase-auth>
+		<firebase-document location="[[connectionUrl]]" id="connection" data="{{connected}}"></firebase-document>
 		<iron-page-url path="{{path}}" url-space-regex="^/dashboard/"></iron-page-url>
 		<paper-drawer-panel force-narrow id="drawerPanel" hidden$="[[!user]]">
 			<paper-header-panel drawer>
@@ -155,6 +157,13 @@
 			{
 				is: 'pp-dashboard',
 				properties: {
+					firebaseJson: {
+						type: Object
+					},
+					firebaseUrl: {
+						type: String,
+						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
+					},
 					path: {
 						type: String,
 						observer: '_pathChanged'
@@ -167,21 +176,12 @@
 					},
 					connected: {
 						type: Boolean,
-						value: false,
 						observer: '_connectedChanged'
+					},
+					connectionUrl: {
+						type: String,
+						computed: '_computeConnectionUrl(firebaseUrl)'
 					}
-				},
-				ready: function () {
-					this.$.connection.query.on(
-						'value',
-						function (snapshot) {
-							if (snapshot.val() === true) {
-								this.connected = true;
-							} else {
-								this.connected = false;
-							}
-						}.bind(this)
-					);
 				},
 				login: function () {
 					if (!this.user) this.$.auth.ref.authWithOAuthPopup(
@@ -195,6 +195,12 @@
 				},
 				logout: function () {
 					if (this.user) this.$.auth.logout();
+				},
+				_computeConnectionUrl: function () {
+					if (this.firebaseUrl) return this.firebaseUrl + '.info/connected';
+				},
+				_computeFirebaseUrl: function () {
+					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
 				},
 				_closeDrawer: function () {
 					this.$.drawerPanel.closeDrawer();
