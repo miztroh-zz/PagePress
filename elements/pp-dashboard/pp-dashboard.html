@@ -13,9 +13,14 @@
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-auth.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-document.html">
+<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <link rel="import" href="/bower_components/iron-page-url/iron-page-url.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="/bower_components/paper-material/paper-material.html">
+<link rel="import" href="/bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="/bower_components/paper-input/paper-input.html">
+<link rel="import" href="/bower_components/gold-email-input/gold-email-input.html">
 <link rel="import" href="/elements/pp-page-layouts/pp-page-layouts.html">
 <link rel="import" href="/elements/pp-page-types/pp-page-types.html">
 <link rel="import" href="/elements/pp-pages/pp-pages.html">
@@ -65,17 +70,28 @@
 			}
 
 			#login-backdrop paper-button {
-				background: white;
+				margin: 0;
+			}
+
+			#login-backdrop paper-button:not([disabled]) {
 				color: #2A9AF2;
 			}
 
 			#login-backdrop h1 {
 				color: white;
 			}
+
+			paper-tabs {
+				--paper-tabs-selection-bar-color: #2A9AF2;
+			}
+			paper-tab {
+				--paper-tab-ink: #2A9AF2;
+			}
 		</style>
 		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
 		<firebase-auth location="[[firebaseUrl]]" user="{{user}}" provider="google" id="auth"></firebase-auth>
 		<firebase-document location="[[connectionUrl]]" id="connection" data="{{connected}}"></firebase-document>
+		<firebase-document location="[[adminsUrl]]" id="admins" data="{{admins}}"></firebase-document>
 		<iron-page-url path="{{path}}" url-space-regex="^/dashboard/"></iron-page-url>
 		<paper-drawer-panel force-narrow id="drawerPanel" hidden$="[[!user]]">
 			<paper-header-panel drawer>
@@ -148,8 +164,19 @@
 		<div class="fit horizontal layout center-justified" hidden$="[[user]]" id="login-backdrop">
 			<div class="self-center vertical layout">
 				<h1 style="font-weight: normal;"><strong><em>PagePress</em></strong>&nbsp;Dashboard</h1>
-				<paper-button raised on-tap="login" id="login-button">Log In</paper-button>
+				<paper-material elevation="5" style="background: white;">
+					<div style="padding: 20px;">
+						<gold-email-input label="Email address" always-float-label required auto-validate id="loginEmail"></gold-email-input>
+						<paper-input label="Password" always-float-label required type="password" id="loginPassword"></paper-input>
+						<div class="horizontal layout">
+							<paper-button on-tap="login" id="loginButton">Log In</paper-button>
+							<div class="flex"></div>
+							<paper-button on-tap="register" id="registerButton">Register</paper-button>
+						</div>
+					</div>
+				</paper-material>
 			</div>
+			<paper-toast id="loginToast" style="pointer-events: all;" class="self-start"></paper-toast>
 		</div>
 	</template>
 	<script>
@@ -181,20 +208,129 @@
 					connectionUrl: {
 						type: String,
 						computed: '_computeConnectionUrl(firebaseUrl)'
+					},
+					loginPage: {
+						type: Number,
+						value: 0
+					},
+					adminsUrl: {
+						type: String,
+						computed: '_computeAdminsUrl(firebaseUrl)'
+					},
+					admins: {
+						type: Object
 					}
 				},
 				login: function () {
-					if (!this.user) this.$.auth.ref.authWithOAuthPopup(
-						'google',
-						function () {},
-						{
-							remember: 'sessionOnly',
-							scope: 'email'
+					if (!this.user) {
+						this.$.loginEmail.disabled = true;
+						this.$.loginPassword.disabled = true;
+						this.$.loginButton.disabled = true;
+						this.$.registerButton.disabled = true;
+
+						this.$.auth.ref.authWithPassword(
+							{
+								email: this.$.loginEmail.value,
+								password: this.$.loginPassword.value
+							},
+							function (error, authData) {
+								this.$.loginEmail.disabled = false;
+								this.$.loginPassword.disabled = false;
+								this.$.loginButton.disabled = false;
+								this.$.registerButton.disabled = false;
+
+								if (error) {
+									this.$.loginToast.text = 'Invalid email address and / or password';
+									this.$.loginToast.open();
+								} else {
+									if (this.admins === null) {
+										var admins = {};
+										admins[this.user.uid] = true;
+										this.admins = admins;
+									}
+
+									this.$.loginEmail.value = '';
+									this.$.loginPassword.value = '';
+
+									this.async(
+										function () {
+											this.$.toast.text = 'Login successful';
+											this.$.toast.open();
+										},
+										100
+									);
+								}
+							}.bind(this)
+						);
+					}
+				},
+				register: function () {
+					if (!this.user) {
+						if (!this.$.loginEmail.value) {
+							this.$.loginEmail.invalid = true;
 						}
-					);
+
+						if (!this.$.loginPassword.value) {
+							this.$.loginPassword.invalid = true;
+						} else {
+							this.$.loginPassword.invalid = false;
+						}
+
+						if (this.$.loginEmail.invalid && this.$.loginPassword.invalid) {
+							this.$.loginToast.text = 'Invalid email address and password';
+							this.$.loginToast.open();
+						} else if (this.$.loginEmail.invalid) {
+							this.$.loginToast.text = 'Invalid email address';
+							this.$.loginToast.open();
+						} else if (this.$.loginPassword.invalid) {
+							this.$.loginToast.text = 'Invalid password';
+							this.$.loginToast.open();
+						} else {
+							this.$.loginEmail.disabled = true;
+							this.$.loginPassword.disabled = true;
+							this.$.loginButton.disabled = true;
+							this.$.registerButton.disabled = true;
+
+							this.$.auth.ref.createUser(
+								{
+									email: this.$.loginEmail.value,
+									password: this.$.loginPassword.value
+								},
+								function (error) {
+									this.$.loginEmail.disabled = false;
+									this.$.loginPassword.disabled = false;
+									this.$.loginButton.disabled = false;
+									this.$.registerButton.disabled = false;
+
+									if (error) {
+										switch (error.code) {
+											case 'EMAIL_TAKEN':
+												this.$.loginToast.text = 'Email address already in use';
+												break;
+											case 'INVALID_EMAIL':
+												this.$.loginToast.text = 'Invalid email address';
+												break;
+											default:
+												this.$.loginToast.text = 'Error creating user';
+												break;
+										}
+
+										this.$.loginToast.open();
+									} else {
+										this.$.loginToast.text = 'Registration successful';
+										this.$.loginToast.open();
+										this.login();
+									}
+								}.bind(this)
+							);
+						}
+					}
 				},
 				logout: function () {
 					if (this.user) this.$.auth.logout();
+				},
+				_computeAdminsUrl: function () {
+					if (this.firebaseUrl) return this.firebaseUrl + 'admins/';
 				},
 				_computeConnectionUrl: function () {
 					if (this.firebaseUrl) return this.firebaseUrl + '.info/connected';

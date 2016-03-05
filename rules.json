@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "admins": {
+      ".read": true,
+      "$uid": {
+        ".write": "auth != null && (($uid == auth.uid && !root.child('admins').exists()) || root.child('admins/' + auth.uid).val() == true)"
+      }
+    }
+  }
+}
