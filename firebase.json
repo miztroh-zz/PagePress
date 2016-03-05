@@ -10,7 +10,7 @@
 	"rewrites": [
 		{
 			"source": "!/dashboard/*",
-			"destination": "/page.html"
+			"destination": "/index.html"
 		},
 		{
 			"source": "/dashboard/*",
