@@ -2,6 +2,7 @@
 	"firebase": "pagepress",
   "public": ".",
 	"ignore": [
+		"rules.json",
 		"firebase-debug.log",
 		"**/.*",
 		"**/node_modules/**"
