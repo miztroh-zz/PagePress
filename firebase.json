@@ -2,7 +2,6 @@
 	"firebase": "pagepress",
   "public": ".",
 	"ignore": [
-		"firebase.json",
 		"firebase-debug.log",
 		"**/.*",
 		"**/node_modules/**"
@@ -17,5 +16,5 @@
 			"destination": "/dashboard/index.html"
 		}
 	],
-	"rules": "/rules.json"
+	"rules": "rules.json"
 }
