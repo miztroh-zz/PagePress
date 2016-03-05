@@ -181,6 +181,15 @@
 						this.title = this.page.title;
 						this.type = this.page.type;
 						this.blocks = this.page.blocks;
+					} else if (this.page === null) {
+						switch (this.slug) {
+							case 'error-page':
+								this.page = {title: '404'};
+								break;
+							case 'home-page':
+								this.page = {title: 'Home'};
+								break;
+						}
 					}
         },
         _typeChanged: function () {
