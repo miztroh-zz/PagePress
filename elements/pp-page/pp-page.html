@@ -1,7 +1,7 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
 <link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
-<link rel="import" href="/bower_components/iron-page-url/iron-page-url.html">
+<link rel="import" href="/bower_components/iron-location/iron-location.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-document.html">
@@ -121,7 +121,7 @@
 		<firebase-document location="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
 		<firebase-collection location="[[layoutRowsUrl]]" data="{{rows}}"></firebase-collection>
 		<firebase-document location="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
-		<iron-page-url path="{{path}}" url-space-regex="^(?!/dashboard/)"></iron-page-url>
+		<iron-location path="{{path}}" url-space-regex="^(?!/dashboard/)"></iron-location>
 		<iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
 		<div id="container" class="horizontal layout center-justified">
 			<div id="page" hidden$="[[!page]]">

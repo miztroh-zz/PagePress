@@ -14,7 +14,7 @@
 <link rel="import" href="/bower_components/firebase-element/firebase-auth.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-document.html">
 <link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
-<link rel="import" href="/bower_components/iron-page-url/iron-page-url.html">
+<link rel="import" href="/bower_components/iron-location/iron-location.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/bower_components/paper-material/paper-material.html">
@@ -92,7 +92,7 @@
 		<firebase-auth location="[[firebaseUrl]]" user="{{user}}" provider="google" id="auth"></firebase-auth>
 		<firebase-document location="[[connectionUrl]]" id="connection" data="{{connected}}"></firebase-document>
 		<firebase-document location="[[adminsUrl]]" id="admins" data="{{admins}}"></firebase-document>
-		<iron-page-url path="{{path}}" url-space-regex="^/dashboard/"></iron-page-url>
+		<iron-location path="{{path}}" url-space-regex="^/dashboard/"></iron-location>
 		<paper-drawer-panel force-narrow id="drawerPanel" hidden$="[[!user]]">
 			<paper-header-panel drawer>
 				<paper-toolbar>
