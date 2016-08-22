@@ -1,10 +1,9 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
-<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/bower_components/iron-location/iron-location.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-document.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-query.html">
 <link rel="import" href="/bower_components/iron-media-query/iron-media-query.html">
 <dom-module id="pp-page">
 	<template>
@@ -55,51 +54,51 @@
 			  .column[column-width="1"] {
 				width: calc((100% / 12 * 1) - 2px);
 			  }
-	  
+
 			  .column[column-width="2"] {
 				width: calc((100% / 12 * 2) - 2px);
 			  }
-	  
+
 			  .column[column-width="3"] {
 				width: calc((100% / 12 * 3) - 2px);
 			  }
-	  
+
 			  .column[column-width="4"] {
 				width: calc((100% / 12 * 4) - 2px);
 			  }
-	  
+
 			  .column[column-width="5"] {
 				width: calc((100% / 12 * 5) - 2px);
 			  }
-	  
+
 			  .column[column-width="6"] {
 				width: calc((100% / 12 * 6) - 2px);
 			  }
-	  
+
 			  .column[column-width="7"] {
 				width: calc((100% / 12 * 7) - 2px);
 			  }
-	  
+
 			  .column[column-width="8"] {
 				width: calc((100% / 12 * 8) - 2px);
 			  }
-	  
+
 			  .column[column-width="9"] {
 				width: calc((100% / 12 * 9) - 2px);
 			  }
-	  
+
 			  .column[column-width="10"] {
 				width: calc((100% / 12 * 10) - 2px);
 			  }
-	  
+
 			  .column[column-width="11"] {
 				width: calc((100% / 12 * 11) - 2px);
 			  }
-	  
+
 			  .column[column-width="12"] {
 				width: calc((100% / 12 * 12) - 2px);
 			  }
-	  
+
 			  .column .dropdown-trigger {
 				  @apply(--layout-fit);
 			  }
@@ -115,12 +114,12 @@
 				color: #2a9af2;
 			}
 		</style>
-		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
-		<firebase-collection location="[[pagesUrl]]" id="pages"></firebase-collection>
-		<firebase-document location="[[pageUrl]]" data="{{page}}"></firebase-document>
-		<firebase-document location="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
-		<firebase-collection location="[[layoutRowsUrl]]" data="{{rows}}"></firebase-collection>
-		<firebase-document location="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
+		<firebase-app name="pp-fb" api-key="[[webSetup.apiKey]]" auth-domain="[[webSetup.authDomain]]" database-url="[[webSetup.databaseURL]]" storage-bucket="[[webSetup.storageBucket]]"></firebase-app>
+		<firebase-query app-name="pp-fb" path="/pages" id="pages" data="{{pages}}"></firebase-query>
+		<firebase-document app-name="pp-fb" path="[[pageUrl]]" data="{{page}}"></firebase-document>
+		<firebase-document app-name="pp-fb" path="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
+		<firebase-query app-name="pp-fb" path="[[layoutRowsUrl]]" data="{{rows}}"></firebase-query>
+		<firebase-document app-name="pp-fb" path="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
 		<iron-location path="{{path}}" url-space-regex="^(?!/dashboard/)"></iron-location>
 		<iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
 		<div id="container" class="horizontal layout center-justified">
@@ -158,16 +157,8 @@
 			{
 				is: 'pp-page',
 				properties: {
-					firebaseJson: {
+					webSetup: {
 						type: Object
-					},
-					firebaseUrl: {
-						type: String,
-						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
-					},
-					pagesUrl: {
-						type: String,
-						computed: '_computePagesUrl(firebaseUrl)'
 					},
 					path: {
 						type: String,
@@ -182,14 +173,14 @@
 					},
 					typeLayoutUrl: {
 						type: String,
-						computed: '_computeTypeLayoutUrl(firebaseUrl, page.type)'
+						computed: '_computeTypeLayoutUrl(page.type)'
 					},
 					layout: {
 						type: String
 					},
 					layoutRowsUrl: {
 						type: String,
-						computed: '_computeLayoutRowsUrl(firebaseUrl, layout)'
+						computed: '_computeLayoutRowsUrl(layout)'
 					},
 					rows: {
 						type: Array
@@ -199,33 +190,27 @@
 					},
 					typeBlocksUrl: {
 					  type: String,
-					  computed: '_computeTypeBlocksUrl(firebaseUrl, page.type)'
+					  computed: '_computeTypeBlocksUrl(page.type)'
 					},
 					typeBlocks: {
 					  type: Array
 					},
 					pageUrl: {
 						type: String,
-						computed: '_computePageUrl(firebaseUrl, key, path)'
+						computed: '_computePageUrl(key, path)'
 					}
 				},
 				ready: function () {
 					this.scopeSubtree(this.$.rows, true);
 				},
-				_computeFirebaseUrl: function () {
-					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
-				},
-				_computePagesUrl: function () {
-					if (this.firebaseUrl) return this.firebaseUrl + 'pages';
-				},
 				_computeTypeLayoutUrl: function () {
-					if (this.firebaseUrl && this.page && this.page.type) return this.firebaseUrl + 'page-types/' + this.page.type + '/layout';
+					if (this.page && this.page.type) return '/page-types/' + this.page.type + '/layout';
 				},
 				_computeTypeBlocksUrl: function () {
-					if (this.firebaseUrl && this.page && this.page.type) return this.firebaseUrl + 'page-types/' + this.page.type + '/blocks';
+					if (this.page && this.page.type) return '/page-types/' + this.page.type + '/blocks';
 				},
 				_computeLayoutRowsUrl: function () {
-					if (this.firebaseUrl && this.layout) return this.firebaseUrl + 'page-layouts/' + this.layout + '/rows';
+					if (this.layout && typeof this.layout === 'string') return '/page-layouts/' + this.layout + '/rows';
 				},
 				observers: [
 					'_pageTitleChanged(page.title)'
@@ -281,11 +266,9 @@
 					findPage('', path[0], callback());
 				},
 				_computePageUrl: function () {
-					if (this.firebaseUrl) {
-						if (this.path === '/') return this.firebaseUrl + 'home-page';
-						if (!this.key) return this.firebaseUrl + 'error-page';
-						return this.firebaseUrl + 'pages/' + this.key;
-					}
+					if (this.path === '/') return '/home-page';
+					if (!this.key) return '/error-page';
+					return '/pages/' + this.key;
 				},
 				_pageTitleChanged: function () {
 					document.title = (this.page && this.page.title) ? this.page.title : '404';

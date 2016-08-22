@@ -10,9 +10,15 @@
       }
     </style>
 		<script src="/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+		<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
     <link rel="import" href="/elements/pp-page/pp-page.html">
   </head>
   <body>
-    <pp-page></pp-page>
+		<template is="dom-bind">
+			<iron-ajax url="/webSetup.json" last-response="{{webSetup}}" auto></iron-ajax>
+			<template is="dom-if" if="[[webSetup]]">
+				<pp-page web-setup="[[webSetup]]"></pp-page>
+			</template>
+		</template>
   </body>
 </html>

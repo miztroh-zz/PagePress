@@ -1,22 +1,20 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="/bower_components/paper-item/paper-item.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
-<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/elements/pp-layout-editor/pp-layout-editor.html">
 <dom-module id="pp-page-layouts">
-  <template>
-    <style>
-      :host {
-        display: block;
-        font-family: Roboto;
-      }
+	<template>
+		<style>
+			:host {
+				display: block;
+				font-family: Roboto;
+			}
 
 			#layout {
 				margin-top: 15px;
@@ -33,21 +31,19 @@
 				--paper-input-container-focus-color: #2a9af2;
 				--paper-input-container-invalid-color: #d23f31;
 			}
-    </style>
-		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
-		<firebase-collection location="[[pageLayoutsUrl]]" data="{{layouts}}" order-by-child="name"></firebase-collection>
+		</style>
 		<paper-toast id="toast"></paper-toast>
 		<div class="layout horizontal">
 			<paper-dropdown-menu label="Layout" always-float-label noink class="self-center">
 				<paper-listbox class="dropdown-content" selected="{{index}}">
-					<template is="dom-repeat" items="[[layouts]]" as="layout">
+					<template is="dom-repeat" items="[[pageLayouts]]" as="layout">
 						<paper-item>[[layout.name]]</paper-item>
 					</template>
 				</paper-listbox>
 			</paper-dropdown-menu>
 			<paper-button class="self-center" on-tap="add">Add</paper-button>
 		</div>
-    <div hidden$="[[!layout]]" id="layout">
+		<div hidden$="[[!layout]]" id="layout">
 			<paper-input label="Name" id="name" always-float-label></paper-input>
 			<pp-layout-editor id="editor"></pp-layout-editor>
 			<div class="horizontal layout">
@@ -55,79 +51,68 @@
 				<paper-button on-tap="cancel">Cancel</paper-button>
 				<paper-button on-tap="delete">Delete</paper-button>
 			</div>
-    </div>
-  </template>
-  <script>
-    Polymer(
-      {
-        is: 'pp-page-layouts',
-        properties: {
-					firebaseJson: {
-						type: Object
+		</div>
+	</template>
+	<script>
+		Polymer(
+			{
+				is: 'pp-page-layouts',
+				properties: {
+					pageLayouts: {
+						type: Array
 					},
-					firebaseUrl: {
-						type: String,
-						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
+					index: {
+						type: Number
 					},
-        	layouts: {
-        		type: Array
-        	},
-        	index: {
-        		type: Number
-        	},
-        	layout: {
-        		type: Object,
-        		value: null,
-        		computed: '_computeLayout(index)',
-        		observer: '_layoutChanged'
-        	},
-        	pageLayoutsUrl: {
-        		type: String,
-        		computed: '_computePageLayoutsUrl(firebaseUrl)'
-        	}
-        },
-        add: function () {
-        	this.push(
-        		'layouts',
-        		{
-        			name: 'New Page Layout',
-        			rows: [
-        				{
-        					columns: [
-        						{
-        							width: 1
-        						}
-        					],
-        					justification: 'start-justified'
-        				}
-        			]
-        		}
-        	);
+					layout: {
+						type: Object,
+						value: null,
+						computed: '_computeLayout(index)',
+						observer: '_layoutChanged'
+					}
+				},
+				add: function () {
+					this.push(
+						'pageLayouts',
+						{
+							name: 'New Page Layout',
+							rows: [
+								{
+									columns: [
+										{
+											width: 1
+										}
+									],
+									justification: 'start-justified'
+								}
+							]
+						}
+					);
 
 					this.async(
 						function () {
-							this.index = this.layouts.length - 1;
+							this.index = this.pageLayouts.length - 1;
 						},
 						100
 					);
 
 					this.$.toast.text = 'Layout added';
 					this.$.toast.open();
-        },
-        cancel: function () {
-        	this.index = null;
+				},
+				cancel: function () {
+					this.index = null;
 					this.$.toast.text = 'Layout changes discarded';
 					this.$.toast.open();
-        },
-        delete: function () {
-        	if (this.layout) {
-						this.splice('layouts', this.index, 1);
-	        	this.index = null;
+				},
+				delete: function () {
+					if (this.layout) {
+						this.splice('pageLayouts', this.index, 1);
+						this.index = null;
 						this.$.toast.text = 'Layout deleted';
 						this.$.toast.open();
-        	}
-        },
-        save: function () {
+					}
+				},
+				save: function () {
 					if (this.layout) {
 						var error = false;
 
@@ -145,33 +130,27 @@
 						}
 
 						if (!error) {
-							this.set('layouts.' + this.index + '.name', this.$.name.value);
-							this.set('layouts.' + this.index + '.rows', this.$.editor.rows);
-        			this.index = null;
-        			this.$.toast.text = 'Layout changes saved';
-        			this.$.toast.open();
+							this.set('pageLayouts.' + this.index + '.name', this.$.name.value);
+							this.set('pageLayouts.' + this.index + '.rows', this.$.editor.rows);
+							this.index = null;
+							this.$.toast.text = 'Layout changes saved';
+							this.$.toast.open();
 						} else {
 							this.$.toast.text = error;
 							this.$.toast.open();
 						}
 					}
-        },
-				_computeFirebaseUrl: function () {
-					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
 				},
-				_computePageLayoutsUrl: function () {
-					if (this.firebaseUrl) return this.firebaseUrl + 'page-layouts/';
+				_computeLayout: function () {
+					return this.pageLayouts[this.index];
 				},
-        _computeLayout: function () {
-        	return this.layouts[this.index];
-        },
-        _layoutChanged: function () {
+				_layoutChanged: function () {
 					if (this.layout) {
 						this.$.editor.rows = this.layout.rows;
 						this.$.name.value = this.layout.name;
 					}
-        }
-      }
-    );
-  </script>
+				}
+			}
+		);
+	</script>
 </dom-module>

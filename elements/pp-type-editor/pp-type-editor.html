@@ -5,8 +5,7 @@
 <link rel="import" href="/bower_components/paper-menu-button/paper-menu-button.html">
 <link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="/bower_components/paper-item/paper-item.html">
-<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-query.html">
 <link rel="import" href="/elements/pp-block-types-behavior/pp-block-types-behavior.html">
 <link rel="import" href="/elements/pp-wysiwyg/pp-wysiwyg.html">
 <dom-module id="pp-type-editor">
@@ -31,59 +30,59 @@
 				cursor: pointer;
 			}
 
-      @media (min-width: 768px) {
-        .column[column-width="1"] {
-          width: calc((100% / 12 * 1) - 2px);
-        }
-
-        .column[column-width="2"] {
-          width: calc((100% / 12 * 2) - 2px);
-        }
-
-        .column[column-width="3"] {
-          width: calc((100% / 12 * 3) - 2px);
-        }
-
-        .column[column-width="4"] {
-          width: calc((100% / 12 * 4) - 2px);
-        }
-
-        .column[column-width="5"] {
-          width: calc((100% / 12 * 5) - 2px);
-        }
-
-        .column[column-width="6"] {
-          width: calc((100% / 12 * 6) - 2px);
-        }
-
-        .column[column-width="7"] {
-          width: calc((100% / 12 * 7) - 2px);
-        }
-
-        .column[column-width="8"] {
-          width: calc((100% / 12 * 8) - 2px);
-        }
-
-        .column[column-width="9"] {
-          width: calc((100% / 12 * 9) - 2px);
-        }
-
-        .column[column-width="10"] {
-          width: calc((100% / 12 * 10) - 2px);
-        }
-
-        .column[column-width="11"] {
-          width: calc((100% / 12 * 11) - 2px);
-        }
-
-        .column[column-width="12"] {
-          width: calc((100% / 12 * 12) - 2px);
-        }
+			@media (min-width: 768px) {
+			  .column[column-width="1"] {
+				width: calc((100% / 12 * 1) - 2px);
+			  }
+	  
+			  .column[column-width="2"] {
+				width: calc((100% / 12 * 2) - 2px);
+			  }
+	  
+			  .column[column-width="3"] {
+				width: calc((100% / 12 * 3) - 2px);
+			  }
+	  
+			  .column[column-width="4"] {
+				width: calc((100% / 12 * 4) - 2px);
+			  }
+	  
+			  .column[column-width="5"] {
+				width: calc((100% / 12 * 5) - 2px);
+			  }
+	  
+			  .column[column-width="6"] {
+				width: calc((100% / 12 * 6) - 2px);
+			  }
+	  
+			  .column[column-width="7"] {
+				width: calc((100% / 12 * 7) - 2px);
+			  }
+	  
+			  .column[column-width="8"] {
+				width: calc((100% / 12 * 8) - 2px);
+			  }
+	  
+			  .column[column-width="9"] {
+				width: calc((100% / 12 * 9) - 2px);
+			  }
+	  
+			  .column[column-width="10"] {
+				width: calc((100% / 12 * 10) - 2px);
+			  }
+	  
+			  .column[column-width="11"] {
+				width: calc((100% / 12 * 11) - 2px);
+			  }
+	  
+			  .column[column-width="12"] {
+				width: calc((100% / 12 * 12) - 2px);
+			  }
 
 				.column .dropdown-trigger {
 					@apply(--layout-fit);
 				}
-      }
+			}
 
 			@media (max-width: 767px) {
 				.column {
@@ -97,9 +96,8 @@
 				color: white;
 			}
 		</style>
-		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
     <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
-		<firebase-collection location="[[url]]" data="{{rows}}"></firebase-collection>
+		<firebase-query app-name="pp-fb" path="[[url]]" data="{{rows}}"></firebase-query>
 		<div id="rows">
 			<template is="dom-repeat" items="[[rows]]" as="row" index-as="rowIndex">
 				<div class$="row [[_justification(row.justification, minWidth768px)]]">
@@ -130,57 +128,48 @@
 					PagePress.BlockTypesBehavior
 				],
 				properties: {
-					firebaseJson: {
-						type: Object
-					},
-					firebaseUrl: {
-						type: String,
-						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
-					},
 					layout: {
 						type: String,
 						observer: '_layoutChanged'
 					},
 					url: {
 						type: String,
-						computed: '_computeUrl(firebaseUrl, layout)'
+						computed: '_computeUrl(layout)'
 					},
 					rows: {
 						type: Object,
 						observer: '_rowsChanged'
 					},
-          minWidth768px: {
-            type: Boolean
-          },
-          blocks: {
-          	type: Array,
-          	notify: true,
-        		observer: '_blocksChanged'
-          },
-          activeBlockIndex: {
-          	type: Number
-          }
-				},
-				_computeFirebaseUrl: function () {
-					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
+					minWidth768px: {
+						type: Boolean
+					},
+					blocks: {
+						type: Array,
+						notify: true,
+						observer: '_blocksChanged'
+					},
+					activeBlockIndex: {
+						type: Number
+					}
 				},
 				_computeUrl: function () {
-					if (this.firebaseUrl && this.layout) return this.firebaseUrl + 'page-layouts/' + this.layout + '/rows';
+					if (this.layout && typeof this.layout === 'string') return '/page-layouts/' + this.layout + '/rows';
 				},
-        _justification: function (justification) {
-          if (!this.minWidth768px) return '';
-          return 'layout horizontal ' + justification;
-        },
-        _selectBlock: function (event) {
-        	var target = Polymer.dom(event).localTarget;
-
+				_justification: function (justification) {
+				  if (!this.minWidth768px) return '';
+				  return 'layout horizontal ' + justification;
+				},
+				_selectBlock: function (event) {
+					var target = Polymer.dom(event).localTarget;
+		
 					this.async(
 						function () {
-		        	var block = target.parentNode.selected, blockIndex = this._blockIndex(+target.getAttribute('row-index'), +target.getAttribute('column-index'));
+							var block = target.parentNode.selected, blockIndex = this._blockIndex(+target.getAttribute('row-index'), +target.getAttribute('column-index'));
+		
 							if (blockIndex >= 0) {
 								this.activeBlockIndex = blockIndex;
 								if (!this.blocks[blockIndex] || this.blocks[blockIndex].name !== block) this.set('blocks.' + blockIndex, {name: block});
-
+		
 								if (block === 'static') {
 									if (!this.blocks[blockIndex].value) this.set('blocks.' + blockIndex + '.value', '<p>&nbsp;</p>');
 									this.$.editor.value = this.blocks[blockIndex].value;
@@ -190,25 +179,25 @@
 						},
 						100
 					);
-        },
-        _rowsChanged: function () {
-        	this.async(
-        		function () {
-		        	var lists = this.$.rows.querySelectorAll('paper-listbox');
-
+				},
+				_rowsChanged: function () {
+					this.async(
+						function () {
+							var lists = this.$.rows.querySelectorAll('paper-listbox');
+		
 							for (var i = 0; i < lists.length; i += 1) {
 								lists[i].selected = null;
 							}
-        		},
-        		100
-        	);
-        },
-        _layoutChanged: function () {
-        	this.blocks = [];
-        },
-        _blockIndex: function (rowIndex, columnIndex) {
+						},
+						100
+					);
+				},
+				_layoutChanged: function () {
+					this.blocks = [];
+				},
+				_blockIndex: function (rowIndex, columnIndex) {
 					var blockIndex = -1;
-
+		
 					if (this.rows.length) {
 						for (var i = 0; i <= rowIndex; i += 1) {
 							for (var j = 0; j < (i === rowIndex ? columnIndex + 1 : this.rows[i].columns.length); j += 1) {
@@ -216,43 +205,43 @@
 							}
 						}
 					}
-
+		
 					return blockIndex;
-        },
-        _blockDescription: function (rowIndex, columnIndex) {
-        	var blockIndex = this._blockIndex(rowIndex, columnIndex);
-
+				},
+				_blockDescription: function (rowIndex, columnIndex) {
+					var blockIndex = this._blockIndex(rowIndex, columnIndex);
+		
 					if (blockIndex >= 0 && this.blocks[blockIndex]) {
 						var name = this.blocks[blockIndex].name;
-
+		
 						for (var i = 0; i < this.blockTypes.length; i += 1) {
 							if (this.blockTypes[i].name === name) return this.blockTypes[i].description;
 						}
 					}
-
+		
 					return 'None';
-        },
-        _blockName: function (rowIndex, columnIndex) {
-        	var blockName = 'none', blockIndex = this._blockIndex(rowIndex, columnIndex);
-
+				},
+				_blockName: function (rowIndex, columnIndex) {
+					var blockName = 'none', blockIndex = this._blockIndex(rowIndex, columnIndex);
+		
 					if (blockIndex >= 0 && this.blocks[blockIndex]) {
 						blockName = this.blocks[blockIndex].name;
 					}
-
+		
 					return blockName;
-        },
-        _blocksChanged: function () {
-        	if (!Array.isArray(this.blocks)) this.blocks = [];
-        },
-        _activeBlockSave: function (event) {
-        	if (this.activeBlockIndex >= 0) {
-        		this.set('blocks.' + this.activeBlockIndex + '.value', event.detail.value);
-        		this.activeBlockIndex = null
-        	}
-        },
-        _activeBlockCancel: function (event) {
+				},
+				_blocksChanged: function () {
+					if (!Array.isArray(this.blocks)) this.blocks = [];
+				},
+				_activeBlockSave: function (event) {
+					if (this.activeBlockIndex >= 0) {
+						this.set('blocks.' + this.activeBlockIndex + '.value', event.detail.value);
+						this.activeBlockIndex = null;
+					}
+				},
+				_activeBlockCancel: function (event) {
 					if (this.activeBlockIndex >= 0) this.activeBlockIndex = null;
-        }
+				}
 			}
 		);
 	</script>

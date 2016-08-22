@@ -1,21 +1,25 @@
 {
-	"firebase": "pagepress",
-  "public": ".",
-	"ignore": [
-		"rules.json",
-		"firebase-debug.log",
-		"**/.*",
-		"**/node_modules/**"
-	],
-	"rewrites": [
-		{
-			"source": "!/dashboard/*",
-			"destination": "/index.html"
-		},
-		{
-			"source": "/dashboard/*",
-			"destination": "/dashboard/index.html"
-		}
-	],
+	"hosting" : {
+	  "public": ".",
+		"ignore": [
+			"rules.json",
+			"firebase-debug.log",
+			".bowerrc",
+			".gitignore",
+			"bower.json",
+			"**/.*",
+			"**/node_modules/**"
+		],
+		"rewrites": [
+			{
+				"source": "!/dashboard/*",
+				"destination": "/index.html"
+			},
+			{
+				"source": "/dashboard/*",
+				"destination": "/dashboard/index.html"
+			}
+		]
+	},
 	"rules": "rules.json"
 }

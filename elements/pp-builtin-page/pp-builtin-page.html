@@ -1,12 +1,10 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/iron-overlay-behavior/iron-overlay-behavior.html">
 <link rel="import" href="/bower_components/paper-material/paper-material.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-document.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-document.html">
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
-<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="/elements/pp-page-editor/pp-page-editor.html">
 <dom-module id="pp-builtin-page">
 	<template>
@@ -41,22 +39,20 @@
 				--paper-input-container-invalid-color: #d23f31;
 			}
 		</style>
-		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
-		<firebase-document location="[[pageUrl]]" data="{{page}}"></firebase-document>
-		<firebase-collection location="[[pageTypesUrl]]" data="{{types}}"></firebase-collection>
+		<firebase-document app-name="pp-fb" path="/[[slug]]" data="{{page}}"></firebase-document>
 		<paper-toast id="toast"></paper-toast>
 		<paper-material style="padding: 20px;">
-			<h2>[[page.title]]</h2>
+			<h2 style="margin-top: 0;">[[displayName]]</h2>
     	<div id="page">
 				<paper-input label="Title" id="title" always-float-label value="{{title}}"></paper-input>
 				<paper-dropdown-menu label="Type" always-float-label noink class="self-center" id="typeMenu">
-					<paper-listbox class="dropdown-content" id="typeList" attr-for-selected="key" selected="{{type}}">
-						<template is="dom-repeat" items="[[types]]">
-							<paper-item key$="[[item.__firebaseKey__]]">[[item.name]]</paper-item>
+					<paper-listbox class="dropdown-content" id="typeList" attr-for-selected="key" selected="{{pageType}}">
+						<template is="dom-repeat" items="[[pageTypes]]">
+							<paper-item key$="[[item.$key]]">[[item.name]]</paper-item>
 						</template>
 					</paper-listbox>
 				</paper-dropdown-menu>
-				<pp-page-editor id="editor" type="[[type]]" page-blocks="{{blocks}}"></pp-page-editor>
+				<pp-page-editor id="editor" page-type="[[pageType]]" page-blocks="{{blocks}}"></pp-page-editor>
 				<div class="horizontal layout">
 					<paper-button on-tap="save">Save</paper-button>
 					<paper-button on-tap="cancel">Cancel</paper-button>
@@ -77,26 +73,23 @@
 					'no-cancel-on-esc-key': ''
 				},
 				properties: {
-					firebaseJson: {
-						type: Object
-					},
-					firebaseUrl: {
+					displayName: {
 						type: String,
-						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
+						value: ''
 					},
 					page: {
 						type: Object,
         		observer: '_pageChanged',
         		notify: true
 					},
-        	type: {
+        	pageType: {
         		type: String,
-        		observer: '_typeChanged'
+        		observer: '_pageTypeChanged'
         	},
         	title: {
         		type: String
         	},
-					types: {
+					pageTypes: {
 						type: Array
 					},
 					blocks: {
@@ -104,24 +97,7 @@
 					},
 					slug: {
 						type: String
-					},
-					pageUrl: {
-						type: String,
-						computed: '_computePageUrl(firebaseUrl, slug)'
-					},
-					pageTypesUrl: {
-						type: String,
-						computed: '_computePageTypesUrl(firebaseUrl)'
 					}
-				},
-				_computePageTypesUrl: function () {
-					if (this.firebaseUrl) return this.firebaseUrl + 'page-types/';
-				},
-				_computeFirebaseUrl: function () {
-					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
-				},
-				_computePageUrl: function () {
-					if (this.firebaseUrl && this.slug) return this.firebaseUrl + this.slug;
 				},
 				cancel: function () {
 					this.opened = false;
@@ -139,17 +115,17 @@
 						if (!error) {
 							if (!Array.isArray(this.blocks)) this.blocks = [];
 
-							for (var i = 0; i < this.types.length; i += 1) {
-								if (!this.types[i]) continue;
-								if (this.type === this.types[i].__firebaseKey__) {
-									var typeBlocks = this.types[i].blocks;
+							for (var i = 0; i < this.pageTypes.length; i += 1) {
+								if (!this.pageTypes[i]) continue;
+								if (this.pageType === this.pageTypes[i].$key) {
+									var typeBlocks = this.pageTypes[i].blocks;
 
 									for (var j = 0; j < typeBlocks.length; j += 1) {
 										if (!this.blocks[j] || this.blocks[j].name === 'none') {
 											var block = {name: typeBlocks[j].name};
 
 											if (block.name === 'static') {
-												block.type = this.types[i].__firebaseKey__;
+												block.type = this.pageTypes[i].$key;
 												block.index = j;
 											}
 
@@ -162,7 +138,7 @@
 							}
 
 							this.set('page.title', this.title);
-							this.set('page.type', this.type);
+							this.set('page.type', this.pageType);
 							this.set('page.blocks', this.blocks);
 
         			this.$.typeList.selected = null;
@@ -179,7 +155,7 @@
         _pageChanged: function () {
 					if (this.page) {
 						this.title = this.page.title;
-						this.type = this.page.type;
+						this.pageType = this.page.type;
 						this.blocks = this.page.blocks;
 					} else if (this.page === null) {
 						switch (this.slug) {
@@ -192,7 +168,7 @@
 						}
 					}
         },
-        _typeChanged: function () {
+        _pageTypeChanged: function () {
         	this.blocks = null;
         }
 			}

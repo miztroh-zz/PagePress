@@ -1,5 +1,4 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <link rel="import" href="/bower_components/iron-list/iron-list.html">
 <link rel="import" href="/bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
@@ -13,7 +12,8 @@
 <link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="/bower_components/paper-item/paper-item.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
-<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-query.html">
 <link rel="import" href="/elements/pp-page-editor/pp-page-editor.html">
 <link rel="import" href="/elements/pp-builtin-page/pp-builtin-page.html">
 <dom-module id="pp-pages">
@@ -61,27 +61,24 @@
 				--paper-input-container-invalid-color: #d23f31;
 			}
 		</style>
-		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
-		<firebase-collection location="[[pagesUrl]]" data="{{pages}}"></firebase-collection>
-		<firebase-collection location="[[pageTypesUrl]]" data="{{types}}"></firebase-collection>
 		<paper-toast id="toast"></paper-toast>
 		<div class="horizontal layout" style="margin-bottom: 15px;">
 			<paper-button on-tap="add">Add</paper-button>
 			<paper-button on-tap="homePage">Home Page</paper-button>
 			<paper-button on-tap="errorPage">404 Page</paper-button>
 		</div>
-		<pp-builtin-page id="homePage" slug="home-page"></pp-builtin-page>
-		<pp-builtin-page id="errorPage" slug="error-page"></pp-builtin-page>
-    <div hidden$="[[!page]]" id="page">
+		<pp-builtin-page id="homePage" slug="home-page" display-name="Home Page" page-types="[[pageTypes]]"></pp-builtin-page>
+		<pp-builtin-page id="errorPage" slug="error-page" display-name="404 Page" page-types="[[pageTypes]]"></pp-builtin-page>
+		<div hidden$="[[!page]]" id="page">
 			<paper-input label="Title" id="title" always-float-label></paper-input>
 			<paper-dropdown-menu label="Type" always-float-label noink class="self-center" id="typeMenu">
-				<paper-listbox class="dropdown-content" id="typeList" attr-for-selected="key" selected="{{type}}">
-					<template is="dom-repeat" items="[[types]]">
-						<paper-item key$="[[item.__firebaseKey__]]">[[item.name]]</paper-item>
+				<paper-listbox class="dropdown-content" id="typeList" attr-for-selected="key" selected="{{pageType}}">
+					<template is="dom-repeat" items="[[pageTypes]]">
+						<paper-item key$="[[item.$key]]">[[item.name]]</paper-item>
 					</template>
 				</paper-listbox>
 			</paper-dropdown-menu>
-			<pp-page-editor id="editor" type="[[type]]" page-blocks="{{blocks}}"></pp-page-editor>
+			<pp-page-editor id="editor" page-type="[[pageType]]" page-blocks="{{blocks}}"></pp-page-editor>
 			<div class="horizontal layout">
 				<paper-button on-tap="save">Save</paper-button>
 				<paper-button on-tap="cancel">Cancel</paper-button>
@@ -106,13 +103,6 @@
 			{
 				is: 'pp-pages',
 				properties: {
-					firebaseJson: {
-						type: Object
-					},
-					firebaseUrl: {
-						type: String,
-						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
-					},
 					pages: {
 						type: Array
 					},
@@ -132,26 +122,18 @@
         		computed: '_computePage(index)',
         		observer: '_pageChanged'
         	},
-        	type: {
+        	pageType: {
         		type: String,
-        		observer: '_typeChanged'
+        		observer: '_pageTypeChanged'
         	},
         	title: {
         		type: String
         	},
-					types: {
+					pageTypes: {
 						type: Array
 					},
 					blocks: {
 						type: Array
-					},
-					pagesUrl: {
-						type: String,
-						computed: '_computePagesUrl(firebaseUrl)'
-					},
-					pageTypesUrl: {
-						type: String,
-						computed: '_computePageTypesUrl(firebaseUrl)'
 					}
 				},
 				observers: [
@@ -188,18 +170,13 @@
 					this.$.toast.text = 'Page changes discarded';
 					this.$.toast.open();
         },
-				_computeFirebaseUrl: function () {
-					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
-				},
-				_computePagesUrl: function () {
-					if (this.firebaseUrl) return this.firebaseUrl + 'pages/';
-				},
-				_computePageTypesUrl: function () {
-					if (this.firebaseUrl) return this.firebaseUrl + 'page-types/';
-				},
         _edit: function (event) {
 					var target = Polymer.dom(event).localTarget, index = +target.getAttribute('page-index');
-					if (index >= 0) this.index = this.pageIndexesByFirebaseKey[this.orderedPages[index].__firebaseKey__];
+
+					if (index >= 0) {
+						this.pageType = this.orderedPages[index].$key;
+						this.index = this.pageIndexesByFirebaseKey[this.orderedPages[index].$key];
+					}
         },
 				_view: function (event) {
 					var target = Polymer.dom(event).localTarget, index = +target.getAttribute('page-index');
@@ -232,7 +209,7 @@
 									newPage[srcPageKeys[j]] = srcPage[srcPageKeys[j]];
 								}
 
-								pagesById[srcPage.__firebaseKey__] = newPage;
+								pagesById[srcPage.$key] = newPage;
 
 								if (!newPage.parent) {
 									pagesHierarchical.push(newPage);
@@ -313,12 +290,12 @@
 						var pageIndexesByFirebaseKey = {};
 
 						for (var i = 0; i < this.pages.length; i += 1) {
-							pageIndexesByFirebaseKey[this.pages[i].__firebaseKey__] = i;
+							pageIndexesByFirebaseKey[this.pages[i].$key] = i;
 						}
 
 						if (page.children) {
 							for (i = 0; i < page.children.length; i += 1) {
-								var childIndex = pageIndexesByFirebaseKey[page.children[i].__firebaseKey__];
+								var childIndex = pageIndexesByFirebaseKey[page.children[i].$key];
 								this.set('pages.' + childIndex + '.parent', this.page.parent);
 							}
 						}
@@ -342,16 +319,16 @@
 						if (!error) {
 							if (!Array.isArray(this.blocks)) this.blocks = [];
 
-							for (var i = 0; i < this.types.length; i += 1) {
-								if (this.type === this.types[i].__firebaseKey__) {
-									var typeBlocks = this.types[i].blocks;
+							for (var i = 0; i < this.pageTypes.length; i += 1) {
+								if (this.pageType === this.pageTypes[i].$key) {
+									var typeBlocks = this.pageTypes[i].blocks;
 
 									for (var j = 0; j < typeBlocks.length; j += 1) {
 										if ((!this.blocks[j] || this.blocks[j].name === 'none') && typeBlocks[j]) {
 											var block = {name: typeBlocks[j].name};
 
 											if (block.name === 'static') {
-												block.type = this.types[i].__firebaseKey__;
+												block.type = this.pageTypes[i].$key;
 												block.index = j;
 											}
 
@@ -364,7 +341,7 @@
 							}
 
 							this.set('pages.' + this.index + '.title', this.$.title.value);
-							this.set('pages.' + this.index + '.type', this.type);
+							this.set('pages.' + this.index + '.type', this.pageType);
 							this.set('pages.' + this.index + '.blocks', this.blocks);
 
 							this.set(
@@ -392,18 +369,18 @@
         _pageChanged: function () {
 					if (this.page) {
 						this.$.title.value = this.page.title;
-						this.type = this.page.type;
+						this.pageType = this.page.type;
 						this.blocks = this.page.blocks;
 					}
         },
-        _typeChanged: function () {
+        _pageTypeChanged: function () {
         	this.blocks = null;
         },
         _computePageIndexesByFirebaseKey: function () {
         	var pageIndexesByFirebaseKey = {};
 
 					for (var i = 0; i < this.pages.length; i += 1) {
-						pageIndexesByFirebaseKey[this.pages[i].__firebaseKey__] = i;
+						pageIndexesByFirebaseKey[this.pages[i].$key] = i;
 					}
 
 					return pageIndexesByFirebaseKey;

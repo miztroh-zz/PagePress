@@ -1,10 +1,10 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
-<link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-document.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-document.html">
 <link rel="import" href="/bower_components/iron-media-query/iron-media-query.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-query.html">
 <link rel="import" href="/elements/pp-wysiwyg/pp-wysiwyg.html">
 <link rel="import" href="/elements/pp-block-types-behavior/pp-block-types-behavior.html">
 <dom-module id="pp-page-editor">
@@ -24,59 +24,59 @@
 				min-height: 100px;
 			}
 
-      @media (min-width: 768px) {
-        .column[column-width="1"] {
-          width: calc(100% / 12 * 1);
-        }
-
-        .column[column-width="2"] {
-          width: calc(100% / 12 * 2);
-        }
-
-        .column[column-width="3"] {
-          width: calc(100% / 12 * 3);
-        }
-
-        .column[column-width="4"] {
-          width: calc(100% / 12 * 4);
-        }
-
-        .column[column-width="5"] {
-          width: calc(100% / 12 * 5);
-        }
-
-        .column[column-width="6"] {
-          width: calc(100% / 12 * 6);
-        }
-
-        .column[column-width="7"] {
-          width: calc(100% / 12 * 7);
-        }
-
-        .column[column-width="8"] {
-          width: calc(100% / 12 * 8);
-        }
-
-        .column[column-width="9"] {
-          width: calc(100% / 12 * 9);
-        }
-
-        .column[column-width="10"] {
-          width: calc(100% / 12 * 10);
-        }
-
-        .column[column-width="11"] {
-          width: calc(100% / 12 * 11);
-        }
-
-        .column[column-width="12"] {
-          width: calc(100% / 12 * 12);
-        }
+			@media (min-width: 768px) {
+			  .column[column-width="1"] {
+				width: calc(100% / 12 * 1);
+			  }
+			
+			  .column[column-width="2"] {
+				width: calc(100% / 12 * 2);
+			  }
+			
+			  .column[column-width="3"] {
+				width: calc(100% / 12 * 3);
+			  }
+			
+			  .column[column-width="4"] {
+				width: calc(100% / 12 * 4);
+			  }
+			
+			  .column[column-width="5"] {
+				width: calc(100% / 12 * 5);
+			  }
+			
+			  .column[column-width="6"] {
+				width: calc(100% / 12 * 6);
+			  }
+			
+			  .column[column-width="7"] {
+				width: calc(100% / 12 * 7);
+			  }
+			
+			  .column[column-width="8"] {
+				width: calc(100% / 12 * 8);
+			  }
+			
+			  .column[column-width="9"] {
+				width: calc(100% / 12 * 9);
+			  }
+			
+			  .column[column-width="10"] {
+				width: calc(100% / 12 * 10);
+			  }
+			
+			  .column[column-width="11"] {
+				width: calc(100% / 12 * 11);
+			  }
+			
+			  .column[column-width="12"] {
+				width: calc(100% / 12 * 12);
+			  }
 
 				.column .dropdown-trigger {
 					@apply(--layout-fit);
 				}
-      }
+			}
 
 			@media (max-width: 767px) {
 				.column {
@@ -99,11 +99,10 @@
 				cursor: pointer;
 			}
 		</style>
-		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
     <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
-		<firebase-document location="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
-		<firebase-document location="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
-		<firebase-collection location="[[layoutRowsUrl]]" data="{{rows}}"></firebase-collection>
+		<firebase-document app-name="pp-fb" path="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
+		<firebase-document app-name="pp-fb" path="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
+		<firebase-query app-name="pp-fb" path="[[layoutRowsUrl]]" data="{{rows}}"></firebase-query>
 		<div id="rows">
 			<template is="dom-repeat" items="[[rows]]" as="row" index-as="rowIndex">
 				<div class$="row [[_justification(row.justification, minWidth768px)]]">
@@ -127,68 +126,58 @@
 					PagePress.BlockTypesBehavior
 				],
 				properties: {
-					firebaseJson: {
-						type: Object
-					},
-					firebaseUrl: {
-						type: String,
-						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
-					},
-					type: {
+					pageType: {
 						type: String
 					},
 					typeLayoutUrl: {
 						type: String,
-						computed: '_computeTypeLayoutUrl(firebaseUrl, type)'
+						computed: '_computeTypeLayoutUrl(pageType)'
 					},
 					layout: {
 						type: String
 					},
 					typeBlocksUrl: {
 						type: String,
-						computed: '_computeTypeBlocksUrl(firebaseUrl, type)'
+						computed: '_computeTypeBlocksUrl(pageType)'
 					},
 					typeBlocks: {
 						type: Array
 					},
 					layoutRowsUrl: {
 						type: String,
-						computed: '_computeLayoutRowsUrl(firebaseUrl, layout)'
+						computed: '_computeLayoutRowsUrl(layout)'
 					},
 					rows: {
 						type: Array
 					},
-          activeBlockIndex: {
-          	type: Number
-          },
-          pageBlocks: {
-          	type: Array,
-          	value: function () {
-          		return [];
-          	},
-          	notify: true
-          },
-          minWidth768px: {
-            type: Boolean
-          }
-				},
-				_computeFirebaseUrl: function () {
-					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
+					activeBlockIndex: {
+						type: Number
+					},
+					pageBlocks: {
+						type: Array,
+						value: function () {
+							return [];
+						},
+						notify: true
+					},
+					minWidth768px: {
+						type: Boolean
+					}
 				},
 				_computeTypeLayoutUrl: function () {
-					if (this.firebaseUrl && this.type) return this.firebaseUrl + 'page-types/' + this.type + '/layout';
+					if (this.pageType) return '/page-types/' + this.pageType + '/layout';
 				},
 				_computeTypeBlocksUrl: function () {
-					if (this.firebaseUrl && this.type) return this.firebaseUrl + 'page-types/' + this.type + '/blocks';
+					if (this.pageType) return '/page-types/' + this.pageType + '/blocks';
 				},
 				_computeLayoutRowsUrl: function () {
-					if (this.firebaseUrl && this.layout) return this.firebaseUrl + 'page-layouts/' + this.layout + '/rows';
+					if (this.layout && typeof this.layout === 'string') return '/page-layouts/' + this.layout + '/rows';
 				},
-        _justification: function (justification) {
-          if (!this.minWidth768px) return '';
-          return 'layout horizontal ' + justification;
-        },
-        _blockIndex: function (rowIndex, columnIndex) {
+				_justification: function (justification) {
+				  if (!this.minWidth768px) return '';
+				  return 'layout horizontal ' + justification;
+				},
+				_blockIndex: function (rowIndex, columnIndex) {
 					var blockIndex = -1;
 
 					if (this.rows.length) {
@@ -200,10 +189,10 @@
 					}
 
 					return blockIndex;
-        },
-        _blockDescription: function (rowIndex, columnIndex) {
-        	var blockIndex = this._blockIndex(rowIndex, columnIndex);
-
+				},
+				_blockDescription: function (rowIndex, columnIndex) {
+					var blockIndex = this._blockIndex(rowIndex, columnIndex);
+		
 					if (blockIndex >= 0 && this.typeBlocks[blockIndex]) {
 						var name = this.typeBlocks[blockIndex].name;
 
@@ -213,55 +202,55 @@
 					}
 
 					return 'None';
-        },
-        _blockName: function (rowIndex, columnIndex) {
-        	var blockName = 'none', blockIndex = this._blockIndex(rowIndex, columnIndex);
-
+				},
+				_blockName: function (rowIndex, columnIndex) {
+					var blockName = 'none', blockIndex = this._blockIndex(rowIndex, columnIndex);
+		
 					if (blockIndex >= 0 && this.typeBlocks[blockIndex]) {
 						blockName = this.typeBlocks[blockIndex].name;
 					}
 
 					return blockName;
-        },
-        _typeBlocksChanged: function () {
-        	if (!Array.isArray(this.typeBlocks)) this.typeBlocks = [];
-        },
-        _blockActive: function (rowIndex, columnIndex) {
-        	return this._blockName(rowIndex, columnIndex) === 'dynamic';
-        },
-        edit: function (event) {
-        	var target = Polymer.dom(event).localTarget, rowIndex = +target.getAttribute('row-index'), columnIndex = +target.getAttribute('column-index'), active = this._blockActive(rowIndex, columnIndex);
- 					if (active) {
- 						this.activeBlockIndex = this._blockIndex(rowIndex, columnIndex);
-        		if (!Array.isArray(this.pageBlocks)) this.pageBlocks = [];
- 						this.$.editor.value = (this.pageBlocks[this.activeBlockIndex] && this.pageBlocks[this.activeBlockIndex].value) ? this.pageBlocks[this.activeBlockIndex].value : '<p>&nbsp;</p>';
- 						this.$.editor.opened = true;
- 					} else {
- 						this.activeBlockIndex = null;
- 					}
-        },
-        _activeBlockSave: function (event) {
-        	if (this.activeBlockIndex >= 0) {
-        		var block = event.detail;
-        		block.name = this.typeBlocks[this.activeBlockIndex].name;
-
-        		if (!Array.isArray(this.pageBlocks)) {
-        			var pageBlocks = [];
-
+				},
+				_typeBlocksChanged: function () {
+					if (!Array.isArray(this.typeBlocks)) this.typeBlocks = [];
+				},
+				_blockActive: function (rowIndex, columnIndex) {
+					return this._blockName(rowIndex, columnIndex) === 'dynamic';
+				},
+				edit: function (event) {
+					var target = Polymer.dom(event).localTarget, rowIndex = +target.getAttribute('row-index'), columnIndex = +target.getAttribute('column-index'), active = this._blockActive(rowIndex, columnIndex);
+					if (active) {
+						this.activeBlockIndex = this._blockIndex(rowIndex, columnIndex);
+						if (!Array.isArray(this.pageBlocks)) this.pageBlocks = [];
+						this.$.editor.value = (this.pageBlocks[this.activeBlockIndex] && this.pageBlocks[this.activeBlockIndex].value) ? this.pageBlocks[this.activeBlockIndex].value : '<p>&nbsp;</p>';
+						this.$.editor.opened = true;
+					} else {
+						this.activeBlockIndex = null;
+					}
+				},
+				_activeBlockSave: function (event) {
+					if (this.activeBlockIndex >= 0) {
+						var block = event.detail;
+						block.name = this.typeBlocks[this.activeBlockIndex].name;
+		
+						if (!Array.isArray(this.pageBlocks)) {
+							var pageBlocks = [];
+		
 							for (var i = 0; i < this.typeBlocks.length; i += 1) {
 								pageBlocks.push({name: this.typeBlocks[i].name});
 							}
 
 							this.pageBlocks = pageBlocks;
-        		}
-
-        		this.pageBlocks[this.activeBlockIndex] = block;
-        		this.activeBlockIndex = null
-        	}
-        },
-        _activeBlockCancel: function (event) {
+						}
+		
+						this.pageBlocks[this.activeBlockIndex] = block;
+						this.activeBlockIndex = null
+					}
+				},
+				_activeBlockCancel: function (event) {
 					if (this.activeBlockIndex >= 0) this.activeBlockIndex = null;
-        }
+				}
 			}
 		);
 	</script>

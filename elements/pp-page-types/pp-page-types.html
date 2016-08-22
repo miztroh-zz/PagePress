@@ -1,7 +1,6 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/paper-button/paper-button.html">
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
-<link rel="import" href="/bower_components/firebase-element/firebase-collection.html">
 <link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="/bower_components/paper-item/paper-item.html">
@@ -36,14 +35,11 @@
 				--paper-input-container-invalid-color: #d23f31;
 			}
     </style>
-		<iron-ajax url="/firebase.json" last-response="{{firebaseJson}}" auto></iron-ajax>
-		<firebase-collection location="[[pageTypesUrl]]" data="{{types}}" order-by-child="name"></firebase-collection>
-		<firebase-collection location="[[pageLayoutsUrl]]" data="{{layouts}}" order-by-child="name"></firebase-collection>
 		<paper-toast id="toast"></paper-toast>
 		<div class="layout horizontal">
 			<paper-dropdown-menu label="Type" always-float-label noink class="self-center">
 				<paper-listbox class="dropdown-content" selected="{{index}}">
-					<template is="dom-repeat" items="[[types]]" as="type">
+					<template is="dom-repeat" items="[[pageTypes]]" as="type">
 						<paper-item>[[type.name]]</paper-item>
 					</template>
 				</paper-listbox>
@@ -54,8 +50,8 @@
 			<paper-input label="Name" id="name" always-float-label></paper-input>
 			<paper-dropdown-menu label="Layout" always-float-label noink class="self-center" id="layoutMenu">
 				<paper-listbox class="dropdown-content" id="layoutList" attr-for-selected="key" selected="{{layout}}">
-					<template is="dom-repeat" items="[[layouts]]">
-						<paper-item key$="[[item.__firebaseKey__]]">[[item.name]]</paper-item>
+					<template is="dom-repeat" items="[[pageLayouts]]">
+						<paper-item key$="[[item.$key]]">[[item.name]]</paper-item>
 					</template>
 				</paper-listbox>
 			</paper-dropdown-menu>
@@ -72,14 +68,7 @@
       {
         is: 'pp-page-types',
         properties: {
-					firebaseJson: {
-						type: Object
-					},
-					firebaseUrl: {
-						type: String,
-						computed: '_computeFirebaseUrl(firebaseJson.firebase)'
-					},
-        	types: {
+        	pageTypes: {
         		type: Array
         	},
         	index: {
@@ -91,7 +80,7 @@
         		computed: '_computeType(index)',
         		observer: '_typeChanged'
         	},
-        	layouts: {
+        	pageLayouts: {
         		type: Array
         	},
         	layout: {
@@ -102,19 +91,11 @@
         		value: function () {
         			return [];
         		}
-        	},
-        	pageTypesUrl: {
-        		type: String,
-        		computed: '_computePageTypesUrl(firebaseUrl)'
-        	},
-        	pageLayoutsUrl: {
-        		type: String,
-        		computed: '_computePageLayoutsUrl(firebaseUrl)'
         	}
         },
         add: function () {
         	this.push(
-        		'types',
+        		'pageTypes',
         		{
         			name: 'New Page Type'
         		}
@@ -122,7 +103,7 @@
 
 					this.async(
 						function () {
-							this.index = this.types.length - 1;
+							this.index = this.pageTypes.length - 1;
 						},
 						100
 					);
@@ -137,7 +118,7 @@
         },
         delete: function () {
         	if (this.type) {
-						this.splice('types', this.index, 1);
+						this.splice('pageTypes', this.index, 1);
 	        	this.index = null;
 						this.$.toast.text = 'Type deleted';
 						this.$.toast.open();
@@ -154,9 +135,9 @@
 						}
 
 						if (!error) {
-							this.set('types.' + this.index + '.name', this.$.name.value);
-							this.set('types.' + this.index + '.layout', this.layout);
-							this.set('types.' + this.index + '.blocks', this.$.editor.blocks);
+							this.set('pageTypes.' + this.index + '.name', this.$.name.value);
+							this.set('pageTypes.' + this.index + '.layout', this.layout);
+							this.set('pageTypes.' + this.index + '.blocks', this.$.editor.blocks);
         			this.index = null;
         			this.$.layoutList.selected = null;
         			this.$.toast.text = 'Type changes saved';
@@ -170,14 +151,8 @@
 				_computeFirebaseUrl: function () {
 					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
 				},
-				_computePageTypesUrl: function () {
-					if (this.firebaseUrl) return this.firebaseUrl + 'page-types/';
-				},
-				_computePageLayoutsUrl: function () {
-					if (this.firebaseUrl) return this.firebaseUrl + 'page-layouts/';
-				},
         _computeType: function () {
-        	return this.types[this.index];
+        	return this.pageTypes[this.index];
         },
         _typeChanged: function () {
 					if (this.type) {
