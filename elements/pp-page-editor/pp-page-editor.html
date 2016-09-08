@@ -1,10 +1,13 @@
 <link rel="import" href="/bower_components/polymer/polymer.html">
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
+<link rel="import" href="/bower_components/iron-overlay-behavior/iron-overlay-behavior.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/polymerfire/firebase-document.html">
 <link rel="import" href="/bower_components/iron-media-query/iron-media-query.html">
 <link rel="import" href="/bower_components/polymerfire/firebase-document.html">
 <link rel="import" href="/bower_components/polymerfire/firebase-query.html">
+<link rel="import" href="/bower_components/paper-material/paper-material.html">
+<link rel="import" href="/bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="/elements/pp-wysiwyg/pp-wysiwyg.html">
 <link rel="import" href="/elements/pp-block-types-behavior/pp-block-types-behavior.html">
 <dom-module id="pp-page-editor">
@@ -12,7 +15,32 @@
 		<style>
 			:host {
 				display: block;
+				width: calc(100vw - 60px);
+				height: calc(100vh - 60px);
 				font-family: Roboto;
+			}
+
+			@media (max-width: 767px) {
+				:host {
+					width: 100vw;
+					height: 100vh;
+				}
+			}
+
+			paper-material {
+				background: white;
+			}
+
+			paper-input,
+			paper-dropdown-menu {
+				width: 300px;
+				max-width: 100%;
+			}
+
+			paper-dropdown-menu,
+			paper-input {
+				--paper-input-container-focus-color: #2a9af2;
+				--paper-input-container-invalid-color: #d23f31;
 			}
 
 			#rows {
@@ -25,53 +53,53 @@
 			}
 
 			@media (min-width: 768px) {
-			  .column[column-width="1"] {
+				.column[column-width="1"] {
 				width: calc(100% / 12 * 1);
-			  }
-			
-			  .column[column-width="2"] {
+				}
+
+				.column[column-width="2"] {
 				width: calc(100% / 12 * 2);
-			  }
-			
-			  .column[column-width="3"] {
+				}
+
+				.column[column-width="3"] {
 				width: calc(100% / 12 * 3);
-			  }
-			
-			  .column[column-width="4"] {
+				}
+
+				.column[column-width="4"] {
 				width: calc(100% / 12 * 4);
-			  }
-			
-			  .column[column-width="5"] {
+				}
+
+				.column[column-width="5"] {
 				width: calc(100% / 12 * 5);
-			  }
-			
-			  .column[column-width="6"] {
+				}
+
+				.column[column-width="6"] {
 				width: calc(100% / 12 * 6);
-			  }
-			
-			  .column[column-width="7"] {
+				}
+
+				.column[column-width="7"] {
 				width: calc(100% / 12 * 7);
-			  }
-			
-			  .column[column-width="8"] {
+				}
+
+				.column[column-width="8"] {
 				width: calc(100% / 12 * 8);
-			  }
-			
-			  .column[column-width="9"] {
+				}
+
+				.column[column-width="9"] {
 				width: calc(100% / 12 * 9);
-			  }
-			
-			  .column[column-width="10"] {
+				}
+
+				.column[column-width="10"] {
 				width: calc(100% / 12 * 10);
-			  }
-			
-			  .column[column-width="11"] {
+				}
+
+				.column[column-width="11"] {
 				width: calc(100% / 12 * 11);
-			  }
-			
-			  .column[column-width="12"] {
+				}
+
+				.column[column-width="12"] {
 				width: calc(100% / 12 * 12);
-			  }
+				}
 
 				.column .dropdown-trigger {
 					@apply(--layout-fit);
@@ -99,23 +127,42 @@
 				cursor: pointer;
 			}
 		</style>
-    <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
+		<paper-toast id="toast"></paper-toast>
+		<iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
+		<firebase-query app-name="pp-fb" path="/pages/layouts" data="{{layouts}}"></firebase-query>
+		<firebase-query app-name="pp-fb" path="/pages/types" data="{{types}}"></firebase-query>
 		<firebase-document app-name="pp-fb" path="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
 		<firebase-document app-name="pp-fb" path="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
+		<div id="changes" hidden></div>
 		<firebase-query app-name="pp-fb" path="[[layoutRowsUrl]]" data="{{rows}}"></firebase-query>
-		<div id="rows">
-			<template is="dom-repeat" items="[[rows]]" as="row" index-as="rowIndex">
-				<div class$="row [[_justification(row.justification, minWidth768px)]]">
-					<template is="dom-repeat" items="[[row.columns]]" as="column" index-as="columnIndex">
-						<div class="column relative" column-width$="[[column.width]]">
-							<div class="fit horizontal layout center-justified block" row-index$="[[rowIndex]]" column-index$="[[columnIndex]]" active$="[[_blockActive(rowIndex, columnIndex, typeBlocks.*)]]" on-tap="edit">
-								<div class="self-center" style="pointer-events: none;">[[_blockDescription(rowIndex, columnIndex, typeBlocks.*)]]</div>
-							</div>
-						</div>
+		<paper-material style="padding: 20px;">
+			<h2 style="margin-top: 0;">[[heading]]</h2>
+			<paper-input label="Title" id="title" always-float-label value="{{title}}"></paper-input>
+			<paper-dropdown-menu label="Type" always-float-label noink class="self-center" id="typeMenu">
+				<paper-listbox class="dropdown-content" id="typeList" attr-for-selected="key" selected="{{type}}">
+					<template is="dom-repeat" items="[[types]]">
+						<paper-item key$="[[item.$key]]">[[item.name]]</paper-item>
 					</template>
-				</div>
-			</template>
-		</div>
+				</paper-listbox>
+			</paper-dropdown-menu>
+			<div id="rows">
+				<template is="dom-repeat" items="[[rows]]" as="row" index-as="rowIndex">
+					<div class$="row [[_justification(row.justification, minWidth768px)]]">
+						<template is="dom-repeat" items="[[row.columns]]" as="column" index-as="columnIndex">
+							<div class="column relative" column-width$="[[column.width]]">
+								<div class="fit horizontal layout center-justified block" row-index$="[[rowIndex]]" column-index$="[[columnIndex]]" active$="[[_blockActive(rowIndex, columnIndex, typeBlocks.*)]]" on-tap="edit">
+									<div class="self-center" style="pointer-events: none;">[[_blockDescription(rowIndex, columnIndex, typeBlocks.*)]]</div>
+								</div>
+							</div>
+						</template>
+					</div>
+				</template>
+			</div>
+			<div class="horizontal layout">
+				<paper-button on-tap="save">Save</paper-button>
+				<paper-button on-tap="cancel">Cancel</paper-button>
+			</div>
+		</paper-material>
 		<pp-wysiwyg id="editor" on-save="_activeBlockSave" on-cancel="_activeBlockCancel"></pp-wysiwyg>
 	</template>
 	<script>
@@ -123,22 +170,40 @@
 			{
 				is: 'pp-page-editor',
 				behaviors: [
-					PagePress.BlockTypesBehavior
+					PagePress.BlockTypesBehavior,
+					Polymer.IronOverlayBehavior
 				],
+				hostAttributes: {
+					'with-backdrop': '',
+					'no-cancel-on-outside-click': '',
+					'no-cancel-on-esc-key': ''
+				},
 				properties: {
-					pageType: {
+					key: {
+						type: String,
+					},
+					heading: {
+						type: String
+					},
+					layouts: {
+						type: Array
+					},
+					types: {
+						type: Array
+					},
+					type: {
 						type: String
 					},
 					typeLayoutUrl: {
 						type: String,
-						computed: '_computeTypeLayoutUrl(pageType)'
+						computed: '_computeTypeLayoutUrl(type)'
 					},
 					layout: {
 						type: String
 					},
 					typeBlocksUrl: {
 						type: String,
-						computed: '_computeTypeBlocksUrl(pageType)'
+						computed: '_computeTypeBlocksUrl(type)'
 					},
 					typeBlocks: {
 						type: Array
@@ -153,7 +218,7 @@
 					activeBlockIndex: {
 						type: Number
 					},
-					pageBlocks: {
+					blocks: {
 						type: Array,
 						value: function () {
 							return [];
@@ -162,20 +227,32 @@
 					},
 					minWidth768px: {
 						type: Boolean
+					},
+					title: {
+						type: String
+					},
+					url: {
+						type: String
 					}
 				},
+				_slugify: function (title) {
+					return title.toString().toLowerCase().trim()
+						.replace(/&/g, '-and-')			// Replace & with 'and'
+						.replace(/[\s\W-]+/g, '-')	// Replace spaces, non-word characters and dashes with a single dash (-)
+						.replace(/-$/, '');					// Remove last floating dash if exists)
+				},
 				_computeTypeLayoutUrl: function () {
-					if (this.pageType) return '/page-types/' + this.pageType + '/layout';
+					if (this.type) return '/pages/types/' + this.type + '/layout';
 				},
 				_computeTypeBlocksUrl: function () {
-					if (this.pageType) return '/page-types/' + this.pageType + '/blocks';
+					if (this.type) return '/pages/types/' + this.type + '/blocks';
 				},
 				_computeLayoutRowsUrl: function () {
-					if (this.layout && typeof this.layout === 'string') return '/page-layouts/' + this.layout + '/rows';
+					if (this.layout && typeof this.layout === 'string') return '/pages/layouts/' + this.layout + '/rows';
 				},
 				_justification: function (justification) {
-				  if (!this.minWidth768px) return '';
-				  return 'layout horizontal ' + justification;
+					if (!this.minWidth768px) return '';
+					return 'layout horizontal ' + justification;
 				},
 				_blockIndex: function (rowIndex, columnIndex) {
 					var blockIndex = -1;
@@ -192,7 +269,7 @@
 				},
 				_blockDescription: function (rowIndex, columnIndex) {
 					var blockIndex = this._blockIndex(rowIndex, columnIndex);
-		
+
 					if (blockIndex >= 0 && this.typeBlocks[blockIndex]) {
 						var name = this.typeBlocks[blockIndex].name;
 
@@ -205,7 +282,7 @@
 				},
 				_blockName: function (rowIndex, columnIndex) {
 					var blockName = 'none', blockIndex = this._blockIndex(rowIndex, columnIndex);
-		
+
 					if (blockIndex >= 0 && this.typeBlocks[blockIndex]) {
 						blockName = this.typeBlocks[blockIndex].name;
 					}
@@ -222,8 +299,8 @@
 					var target = Polymer.dom(event).localTarget, rowIndex = +target.getAttribute('row-index'), columnIndex = +target.getAttribute('column-index'), active = this._blockActive(rowIndex, columnIndex);
 					if (active) {
 						this.activeBlockIndex = this._blockIndex(rowIndex, columnIndex);
-						if (!Array.isArray(this.pageBlocks)) this.pageBlocks = [];
-						this.$.editor.value = (this.pageBlocks[this.activeBlockIndex] && this.pageBlocks[this.activeBlockIndex].value) ? this.pageBlocks[this.activeBlockIndex].value : '<p>&nbsp;</p>';
+						if (!Array.isArray(this.blocks)) this.blocks = [];
+						this.$.editor.value = (this.blocks[this.activeBlockIndex] && this.blocks[this.activeBlockIndex].value) ? this.blocks[this.activeBlockIndex].value : '<p>&nbsp;</p>';
 						this.$.editor.opened = true;
 					} else {
 						this.activeBlockIndex = null;
@@ -233,23 +310,105 @@
 					if (this.activeBlockIndex >= 0) {
 						var block = event.detail;
 						block.name = this.typeBlocks[this.activeBlockIndex].name;
-		
-						if (!Array.isArray(this.pageBlocks)) {
-							var pageBlocks = [];
-		
+
+						if (!Array.isArray(this.blocks)) {
+							var blocks = [];
+
 							for (var i = 0; i < this.typeBlocks.length; i += 1) {
-								pageBlocks.push({name: this.typeBlocks[i].name});
+								blocks.push({name: this.typeBlocks[i].name});
 							}
 
-							this.pageBlocks = pageBlocks;
+							this.blocks = blocks;
 						}
-		
-						this.pageBlocks[this.activeBlockIndex] = block;
+
+						this.blocks[this.activeBlockIndex] = block;
 						this.activeBlockIndex = null
 					}
 				},
 				_activeBlockCancel: function (event) {
 					if (this.activeBlockIndex >= 0) this.activeBlockIndex = null;
+				},
+				cancel: function () {
+					this.opened = false;
+				},
+				save: function () {
+					var error = false;
+
+					if (this.title.trim().length === 0) {
+						error = 'Pages must have a valid title';
+					} else if (!this.$.typeMenu.selectedItem) {
+						error = 'Pages must be based on a valid type';
+					}
+
+					if (!error) {
+						if (!Array.isArray(this.blocks)) this.blocks = [];
+
+						for (var i = 0; i < this.types.length; i += 1) {
+							if (!this.types[i]) continue;
+							if (this.type === this.types[i].$key) {
+								var typeBlocks = this.types[i].blocks;
+
+								for (var j = 0; j < typeBlocks.length; j += 1) {
+									if (!this.blocks[j] || this.blocks[j].name === 'none') {
+										var block = {name: typeBlocks[j].name};
+
+										if (block.name === 'static') {
+											block.type = this.types[i].$key;
+											block.index = j;
+										}
+
+										this.set('blocks.' + j, block);
+									}
+								}
+
+								break;
+							}
+						}
+
+						this.$.changes.innerHTML = '';
+						var doc = document.createElement('firebase-document');
+						this.$.changes.appendChild(doc);
+						doc.appName = 'pp-fb';
+
+						var data = {
+							type: this.type,
+							title: this.title,
+							blocks: this.blocks,
+						};
+
+						if (this.key && ['home', 'error'].indexOf(this.key) === -1) {
+							var urlParts = this.url.split('/'), urlPart, url = [];
+	
+							for (i = 0; i < urlParts.length; i += 1) {
+								urlPart = this._slugify(urlParts[i]);
+								if (urlPart) url.push(urlPart);
+							}
+	
+							url.pop();
+							url.push(this._slugify(this.title));
+							data.url = url
+						}
+
+            doc.data = data;
+
+						switch (this.key) {
+							case 'home':
+							case 'error':
+								doc.save('/pages/builtin/', this.key);
+								break;
+							default:
+								doc.save('/pages/custom/', this.key);
+								break;
+						}
+
+						this.$.toast.text = 'Page changes saved';
+						this.$.toast.open();
+					} else {
+						this.$.toast.text = error;
+						this.$.toast.open();
+					}
+
+					this.opened = false;
 				}
 			}
 		);

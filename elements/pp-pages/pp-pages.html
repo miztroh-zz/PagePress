@@ -15,7 +15,6 @@
 <link rel="import" href="/bower_components/polymerfire/firebase-document.html">
 <link rel="import" href="/bower_components/polymerfire/firebase-query.html">
 <link rel="import" href="/elements/pp-page-editor/pp-page-editor.html">
-<link rel="import" href="/elements/pp-builtin-page/pp-builtin-page.html">
 <dom-module id="pp-pages">
 	<template>
 		<style>
@@ -61,34 +60,20 @@
 				--paper-input-container-invalid-color: #d23f31;
 			}
 		</style>
+		<firebase-document app-name="pp-fb" path="/pages/builtin/home" data="{{homePage}}"></firebase-document>
+		<firebase-document app-name="pp-fb" path="/pages/builtin/error" data="{{errorPage}}"></firebase-document>
+		<firebase-query app-name="pp-fb" path="/pages/custom" data="{{pages}}" order-by-child="url" id="pages"></firebase-query>
 		<paper-toast id="toast"></paper-toast>
 		<div class="horizontal layout" style="margin-bottom: 15px;">
-			<paper-button on-tap="add">Add</paper-button>
-			<paper-button on-tap="homePage">Home Page</paper-button>
-			<paper-button on-tap="errorPage">404 Page</paper-button>
+			<paper-button on-tap="editNewPage">Add</paper-button>
+			<paper-button on-tap="editHomePage">Home Page</paper-button>
+			<paper-button on-tap="editErrorPage">404 Page</paper-button>
 		</div>
-		<pp-builtin-page id="homePage" slug="home-page" display-name="Home Page" page-types="[[pageTypes]]"></pp-builtin-page>
-		<pp-builtin-page id="errorPage" slug="error-page" display-name="404 Page" page-types="[[pageTypes]]"></pp-builtin-page>
-		<div hidden$="[[!page]]" id="page">
-			<paper-input label="Title" id="title" always-float-label></paper-input>
-			<paper-dropdown-menu label="Type" always-float-label noink class="self-center" id="typeMenu">
-				<paper-listbox class="dropdown-content" id="typeList" attr-for-selected="key" selected="{{pageType}}">
-					<template is="dom-repeat" items="[[pageTypes]]">
-						<paper-item key$="[[item.$key]]">[[item.name]]</paper-item>
-					</template>
-				</paper-listbox>
-			</paper-dropdown-menu>
-			<pp-page-editor id="editor" page-type="[[pageType]]" page-blocks="{{blocks}}"></pp-page-editor>
-			<div class="horizontal layout">
-				<paper-button on-tap="save">Save</paper-button>
-				<paper-button on-tap="cancel">Cancel</paper-button>
-				<paper-button on-tap="delete">Delete</paper-button>
-			</div>
-    </div>
-		<iron-list items="[[orderedPages]]" as="page">
+		<pp-page-editor id="editor"></pp-page-editor>
+		<iron-list items="[[pages]]" as="page">
 			<template>
 			<div class="page">
-				<div style="padding: 15px;"><template is="dom-repeat" items="[[page.ancestors]]" as="ancestor">—&nbsp;</template>[[page.title]] <em>([[page.slug]])</em></div>
+				<div style="padding: 15px;"><template is="dom-repeat" items="[[_ancestors(page.url)]]" as="ancestor">—&nbsp;</template>[[_slug(page.url)]] ([[page.title]])</div>
 				<div class="flex"></div>
 				<div class="horizontal layout" style="padding: 5px;">
 					<paper-icon-button icon="image:edit" on-tap="_edit" page-index$="[[index]]"></paper-icon-button>
@@ -105,286 +90,94 @@
 				properties: {
 					pages: {
 						type: Array
-					},
-					pageIndexesByFirebaseKey: {
-						type: Object,
-						computed: '_computePageIndexesByFirebaseKey(pages.*)'
-					},
-					orderedPages: {
-						type: Array
-					},
-        	index: {
-        		type: Number
-        	},
-        	page: {
-        		type: Object,
-        		value: null,
-        		computed: '_computePage(index)',
-        		observer: '_pageChanged'
-        	},
-        	pageType: {
-        		type: String,
-        		observer: '_pageTypeChanged'
-        	},
-        	title: {
-        		type: String
-        	},
-					pageTypes: {
-						type: Array
-					},
-					blocks: {
-						type: Array
 					}
 				},
-				observers: [
-					'_pagesChanged(pages.*)'
-				],
-				homePage: function () {
-					this.$.homePage.opened = true;
+				editHomePage: function () {
+					if (this.homePage) {
+						var page = Object.assign({$key: 'home'}, this.homePage);
+						this.$.editor.heading = 'Home Page';
+						this._prepEditor(page);
+					}
 				},
-				errorPage: function () {
-					this.$.errorPage.opened = true;
+				editErrorPage: function () {
+					if (this.errorPage) {
+						var page = Object.assign({$key: 'error'}, this.errorPage);
+						this.$.editor.heading = 'Error Page';
+						this._prepEditor(page);
+					}
 				},
-        add: function () {
-        	this.push(
-        		'pages',
+        editNewPage: function () {
+        	this.$.editor.heading = 'New Page';
+
+        	this._prepEditor(
         		{
-        			title: 'New Page',
-        			slug: 'new-page',
-        			parent: ''
+        			title: '',
+        			type: null,
+        			blocks: [],
+        			url: ''
         		}
         	);
-
-					this.async(
-						function () {
-							this.index = this.pages.length - 1;
-						},
-						100
-					);
-
-					this.$.toast.text = 'Page added';
-					this.$.toast.open();
         },
-        cancel: function () {
-        	this.index = null;
-					this.$.toast.text = 'Page changes discarded';
-					this.$.toast.open();
+        editExistingPage: function (page) {
+					if (page) {
+						this.$.editor.heading = 'Existing Page';
+						this._prepEditor(page);
+					}
+        },
+        viewExistingPage: function (page) {
+        	if (page) window.open(page.url);
         },
         _edit: function (event) {
 					var target = Polymer.dom(event).localTarget, index = +target.getAttribute('page-index');
 
 					if (index >= 0) {
-						this.pageType = this.orderedPages[index].$key;
-						this.index = this.pageIndexesByFirebaseKey[this.orderedPages[index].$key];
+						var page = this.pages[index];
+						if (page) this.editExistingPage(page);
 					}
         },
 				_view: function (event) {
 					var target = Polymer.dom(event).localTarget, index = +target.getAttribute('page-index');
 
 					if (index >= 0) {
-						var page = this.orderedPages[index];
-
-						if (page) {
-							var path = '/';
-
-							for (var i = page.ancestors.length - 1; i >= 0; i -= 1) {
-								path += page.ancestors[i].slug + '/';
-							}
-
-							path += page.slug + '/';
-							window.open(path);
-						}
+						var page = this.pages[index];
+						if (page) this.viewExistingPage(page);
 					}
 				},
-				_pagesChanged: function () {
-					this.async(
-						function () {
-							var pagesHierarchical = [], childPages = [], pagesById = {};
+        _prepEditor: function (page) {
+					this.$.editor.key = page.$key;
+					this.$.editor.title = page.title;
+					this.$.editor.type = page.type;
+					this.$.editor.blocks = page.blocks;
+					this.$.editor.url = page.url;
+					this.$.editor.opened = true;
+        },
+        _ancestors: function (url) {
+        	var urlParts = url.split('/'), urlPart, ancestors = [];
 
-							for (var i = 0; i < this.pages.length; i += 1) {
-								var srcPage = this.pages[i], srcPageKeys = Object.keys(srcPage);
-								var newPage = {children: [], ancestors: []};
+					for (i = 0; i < urlParts.length; i += 1) {
+						urlPart = this._slugify(urlParts[i]);
+						if (urlPart) ancestors.push(urlPart);
+					}
 
-								for (var j = 0; j < srcPageKeys.length; j += 1) {
-									newPage[srcPageKeys[j]] = srcPage[srcPageKeys[j]];
-								}
-
-								pagesById[srcPage.$key] = newPage;
-
-								if (!newPage.parent) {
-									pagesHierarchical.push(newPage);
-								} else {
-									childPages.push(newPage);
-								}
-							}
-
-							for (i = 0; i < childPages.length; i += 1) {
-								pagesById[childPages[i].parent].children.push(childPages[i]);
-
-								(
-									function (page) {
-										var ancestor = pagesById[page.parent];
-
-										while (ancestor) {
-											page.ancestors.push(ancestor);
-											ancestor = pagesById[ancestor.parent];
-										}
-									}
-								)(childPages[i]);
-							}
-
-							var pagesFlat = [];
-
-							function flattenPages (pages, skipAddingParent) {
-								for (var i = 0; i < pages.length; i += 1) {
-									if (!skipAddingParent) pagesFlat.push(pages[i]);
-
-									if (pages[i].children.length) {
-										var childrenByTitle = {};
-
-										for (var j = 0; j < pages[i].children.length; j += 1) {
-											if (!childrenByTitle[pages[i].children[j].title]) childrenByTitle[pages[i].children[j].title] = [];
-											childrenByTitle[pages[i].children[j].title].push(pages[i].children[j]);
-										}
-
-										var titles = Object.keys(childrenByTitle);
-										titles.sort();
-										var children = [];
-
-										for (j = 0; j < titles.length; j += 1) {
-											for (var k = 0; k < childrenByTitle[titles[j]].length; k += 1) {
-												children.push(childrenByTitle[titles[j]][k]);
-											}
-										}
-
-										flattenPages(children);
-									}
-								}
-							}
-
-							flattenPages([{children: pagesHierarchical}], true);
-							this.orderedPages = pagesFlat;
-						},
-						1000
-					);
+					ancestors.pop();
+					return ancestors;
+        },
+				_slugify: function (title) {
+					return title.toString().toLowerCase().trim()
+						.replace(/&/g, '-and-')			// Replace & with 'and'
+						.replace(/[\s\W-]+/g, '-')	// Replace spaces, non-word characters and dashes with a single dash (-)
+						.replace(/-$/, '');					// Remove last floating dash if exists)
 				},
-				_path: function (index) {
-					if (index >= 0) {
-						var page = this.orderedPages[index];
+				_slug: function (url) {
+        	var urlParts = url.split('/'), urlPart, ancestors = [];
 
-						if (page) {
-							path = '/';
-
-							for (var i = page.ancestors.length - 1; i >= 0; i -= 1) {
-								path += page.ancestors[i].slug + '/';
-							}
-
-							path += page.slug + '/';
-						}
+					for (i = 0; i < urlParts.length; i += 1) {
+						urlPart = this._slugify(urlParts[i]);
+						if (urlPart) ancestors.push(urlPart);
 					}
 
-					return path;
-				},
-				delete: function () {
-					if (this.page) {
-						var pageIndexesByFirebaseKey = {};
-
-						for (var i = 0; i < this.pages.length; i += 1) {
-							pageIndexesByFirebaseKey[this.pages[i].$key] = i;
-						}
-
-						if (page.children) {
-							for (i = 0; i < page.children.length; i += 1) {
-								var childIndex = pageIndexesByFirebaseKey[page.children[i].$key];
-								this.set('pages.' + childIndex + '.parent', this.page.parent);
-							}
-						}
-
-						this.splice('pages', this.index, 1);
-	        	this.index = null;
-						this.$.toast.text = 'Page deleted';
-						this.$.toast.open();
-					}
-				},
-        save: function () {
-					if (this.page) {
-						var error = false;
-
-						if (this.$.title.value.trim().length === 0) {
-							error = 'Pages must have a valid title';
-						} else if (!this.$.typeMenu.selectedItem) {
-							error = 'Pages must be based on a valid type';
-						}
-
-						if (!error) {
-							if (!Array.isArray(this.blocks)) this.blocks = [];
-
-							for (var i = 0; i < this.pageTypes.length; i += 1) {
-								if (this.pageType === this.pageTypes[i].$key) {
-									var typeBlocks = this.pageTypes[i].blocks;
-
-									for (var j = 0; j < typeBlocks.length; j += 1) {
-										if ((!this.blocks[j] || this.blocks[j].name === 'none') && typeBlocks[j]) {
-											var block = {name: typeBlocks[j].name};
-
-											if (block.name === 'static') {
-												block.type = this.pageTypes[i].$key;
-												block.index = j;
-											}
-
-											this.set('blocks.' + j, block);
-										}
-									}
-
-									break;
-								}
-							}
-
-							this.set('pages.' + this.index + '.title', this.$.title.value);
-							this.set('pages.' + this.index + '.type', this.pageType);
-							this.set('pages.' + this.index + '.blocks', this.blocks);
-
-							this.set(
-								'pages.' + this.index + '.slug',
-								//slugify: https://gist.github.com/mathewbyrne/1280286
-								this.$.title.value.toString().toLowerCase().trim()
-									.replace(/&/g, '-and-')			// Replace & with 'and'
-									.replace(/[\s\W-]+/g, '-')	// Replace spaces, non-word characters and dashes with a single dash (-)
-									.replace(/-$/, '')					// Remove last floating dash if exists)
-							);
-
-        			this.index = null;
-        			this.$.typeList.selected = null;
-        			this.$.toast.text = 'Page changes saved';
-        			this.$.toast.open();
-						} else {
-							this.$.toast.text = error;
-							this.$.toast.open();
-						}
-					}
-        },
-        _computePage: function () {
-        	return this.pages[this.index];
-        },
-        _pageChanged: function () {
-					if (this.page) {
-						this.$.title.value = this.page.title;
-						this.pageType = this.page.type;
-						this.blocks = this.page.blocks;
-					}
-        },
-        _pageTypeChanged: function () {
-        	this.blocks = null;
-        },
-        _computePageIndexesByFirebaseKey: function () {
-        	var pageIndexesByFirebaseKey = {};
-
-					for (var i = 0; i < this.pages.length; i += 1) {
-						pageIndexesByFirebaseKey[this.pages[i].$key] = i;
-					}
-
-					return pageIndexesByFirebaseKey;
-        }
+					return ancestors.pop();
+				}
 			}
 		);
 	</script>

@@ -8,8 +8,9 @@
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 <link rel="import" href="/bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="/bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-query.html">
 <link rel="import" href="/elements/pp-type-editor/pp-type-editor.html">
-<dom-module id="pp-page-types">
+<dom-module id="pp-types">
   <template>
     <style>
       :host {
@@ -35,11 +36,13 @@
 				--paper-input-container-invalid-color: #d23f31;
 			}
     </style>
+		<firebase-query app-name="pp-fb" path="/pages/layouts" data="{{layouts}}" order-by-child="name" id="layouts"></firebase-query>
+		<firebase-query app-name="pp-fb" path="/pages/types" data="{{types}}" order-by-child="name" id="types"></firebase-query>
 		<paper-toast id="toast"></paper-toast>
 		<div class="layout horizontal">
 			<paper-dropdown-menu label="Type" always-float-label noink class="self-center">
 				<paper-listbox class="dropdown-content" selected="{{index}}">
-					<template is="dom-repeat" items="[[pageTypes]]" as="type">
+					<template is="dom-repeat" items="[[types]]" as="type">
 						<paper-item>[[type.name]]</paper-item>
 					</template>
 				</paper-listbox>
@@ -50,7 +53,7 @@
 			<paper-input label="Name" id="name" always-float-label></paper-input>
 			<paper-dropdown-menu label="Layout" always-float-label noink class="self-center" id="layoutMenu">
 				<paper-listbox class="dropdown-content" id="layoutList" attr-for-selected="key" selected="{{layout}}">
-					<template is="dom-repeat" items="[[pageLayouts]]">
+					<template is="dom-repeat" items="[[layouts]]">
 						<paper-item key$="[[item.$key]]">[[item.name]]</paper-item>
 					</template>
 				</paper-listbox>
@@ -66,9 +69,9 @@
   <script>
     Polymer(
       {
-        is: 'pp-page-types',
+        is: 'pp-types',
         properties: {
-        	pageTypes: {
+        	types: {
         		type: Array
         	},
         	index: {
@@ -80,7 +83,7 @@
         		computed: '_computeType(index)',
         		observer: '_typeChanged'
         	},
-        	pageLayouts: {
+        	layouts: {
         		type: Array
         	},
         	layout: {
@@ -95,7 +98,7 @@
         },
         add: function () {
         	this.push(
-        		'pageTypes',
+        		'types',
         		{
         			name: 'New Page Type'
         		}
@@ -103,7 +106,7 @@
 
 					this.async(
 						function () {
-							this.index = this.pageTypes.length - 1;
+							this.index = this.types.length - 1;
 						},
 						100
 					);
@@ -118,7 +121,7 @@
         },
         delete: function () {
         	if (this.type) {
-						this.splice('pageTypes', this.index, 1);
+						this.splice('types', this.index, 1);
 	        	this.index = null;
 						this.$.toast.text = 'Type deleted';
 						this.$.toast.open();
@@ -135,9 +138,9 @@
 						}
 
 						if (!error) {
-							this.set('pageTypes.' + this.index + '.name', this.$.name.value);
-							this.set('pageTypes.' + this.index + '.layout', this.layout);
-							this.set('pageTypes.' + this.index + '.blocks', this.$.editor.blocks);
+							this.set('types.' + this.index + '.name', this.$.name.value);
+							this.set('types.' + this.index + '.layout', this.layout);
+							this.set('types.' + this.index + '.blocks', this.$.editor.blocks);
         			this.index = null;
         			this.$.layoutList.selected = null;
         			this.$.toast.text = 'Type changes saved';
@@ -152,7 +155,7 @@
 					if (this.firebaseJson && this.firebaseJson.firebase) return 'https://' + this.firebaseJson.firebase + '.firebaseio.com/';
 				},
         _computeType: function () {
-        	return this.pageTypes[this.index];
+        	return this.types[this.index];
         },
         _typeChanged: function () {
 					if (this.type) {

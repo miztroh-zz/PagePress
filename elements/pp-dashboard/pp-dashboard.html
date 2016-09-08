@@ -20,8 +20,8 @@
 <link rel="import" href="/bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/gold-email-input/gold-email-input.html">
-<link rel="import" href="/elements/pp-page-layouts/pp-page-layouts.html">
-<link rel="import" href="/elements/pp-page-types/pp-page-types.html">
+<link rel="import" href="/elements/pp-layouts/pp-layouts.html">
+<link rel="import" href="/elements/pp-types/pp-types.html">
 <link rel="import" href="/elements/pp-pages/pp-pages.html">
 <dom-module id="pp-dashboard">
 	<template>
@@ -90,10 +90,7 @@
 		<firebase-app name="pp-fb" api-key="[[webSetup.apiKey]]" auth-domain="[[webSetup.authDomain]]" database-url="[[webSetup.databaseURL]]" storage-bucket="[[webSetup.storageBucket]]"></firebase-app>
 		<firebase-auth app-name="pp-fb" app="[[app]]" user="{{user}}" id="auth"></firebase-auth>
 		<firebase-document app-name="pp-fb" path="/.info/connected" id="connection" data="{{connected}}"></firebase-document>
-		<firebase-document app-name="pp-fb" path="/admins" id="admins" data="{{admins}}"></firebase-document>
-		<firebase-query app-name="pp-fb" path="/page-layouts" data="{{pageLayouts}}"></firebase-query>
-		<firebase-query app-name="pp-fb" path="/page-types" data="{{pageTypes}}"></firebase-query>
-		<firebase-query app-name="pp-fb" path="/pages" data="{{pages}}"></firebase-query>
+		<firebase-document app-name="pp-fb" path="/admins" id="admins" data="{{admins}}"></firebase-document>dns
 		<iron-location path="{{path}}" url-space-regex="^/dashboard/"></iron-location>
 		<paper-drawer-panel force-narrow id="drawerPanel" hidden$="[[!user]]">
 			<paper-header-panel drawer>
@@ -103,16 +100,16 @@
 				<div class="fit vertical layout">
 					<div id="navigation" on-tap="_closeDrawer">
 						<a href="/dashboard/">
-							<paper-item page="Overview" selected$="[[_equalTo(page, 'Overview')]]">Overview</paper-item>
+							<paper-item selected$="[[_equalTo(path, '/dashboard/')]]">Overview</paper-item>
 						</a>
-						<a href="/dashboard/page-layouts/">
-							<paper-item page="Page Layouts" selected$="[[_equalTo(page, 'Page Layouts')]]">Page Layouts</paper-item>
+						<a href="/dashboard/layouts/">
+							<paper-item selected$="[[_equalTo(path, '/dashboard/layouts/')]]">Layouts</paper-item>
 						</a>
-						<a href="/dashboard/page-types/">
-							<paper-item page="Page Types" selected$="[[_equalTo(page, 'Page Types')]]">Page Types</paper-item>
+						<a href="/dashboard/types/">
+							<paper-item selected$="[[_equalTo(path, '/dashboard/types/')]]">Types</paper-item>
 						</a>
 						<a href="/dashboard/pages/">
-							<paper-item page="Pages" selected$="[[_equalTo(page, 'Pages')]]">Pages</paper-item>
+							<paper-item selected$="[[_equalTo(path, '/dashboard/pages/')]]">Pages</paper-item>
 						</a>
 					 </div>
 					<div class="flex"></div>
@@ -131,29 +128,29 @@
 						<iron-icon class="self-center" icon="device:network-wifi" hidden$="[[!connected]]"></iron-icon>
 					</div>
 				</paper-toolbar>
-				<iron-pages selected="[[page]]" attr-for-selected="page" hidden$="[[!user]]">
-					<section page="Overview">
+				<iron-pages selected="[[path]]" attr-for-selected="path" hidden$="[[!user]]">
+					<section path="/dashboard/">
 						<h1>Overview</h1>
-						<p>Welcome!	PagePress aims to be a content management system (CMS) reimagined as a single-page application (SPA).  Current functionality is organized around page layouts, page types, and the pages themselves.</p>
-						<h3>Page Layouts</h3>
+						<p>Welcome!	PagePress aims to be a content management system (CMS) reimagined as a single-page application (SPA).  Current functionality is organized around layouts, types, and pages.</p>
+						<h3>Layouts</h3>
 						<p>Reusable layouts arranged in rows and columns with options for how the columns should be justified.  A single layout can be shared among multiple page types.</p>
-						<h3>Page Types</h3>
+						<h3>Types</h3>
 						<p>Take a specified layout and configure it with content.  Content (on a per-block basic) can be static across all page instances of a page type or page-specific.  A single page type can be shared among multiple pages.</p>
 						<h3>Pages</h3>
 						<p>Take a specified type and configure it with content.  Static content may be inherited from the type.</p>
 						<div style="margin-top: 50px;">To get started, click the <iron-icon icon="menu"></iron-icon> button at the top left.</div>
 					</section>
-					<section page="Page Layouts">
-						<h1>Page Layouts</h1>
-						<pp-page-layouts page-layouts="[[pageLayouts]]"></pp-page-layouts>
+					<section path="/dashboard/layouts/">
+						<h1>Layouts</h1>
+						<pp-layouts></pp-layouts>
 					</section>
-					<section page="Page Types">
-						<h1>Page Types</h1>
-						<pp-page-types page-types="[[pageTypes]]" page-layouts="[[pageLayouts]]"></pp-page-types>
+					<section path="/dashboard/types/">
+						<h1>Types</h1>
+						<pp-types></pp-types>
 					</section>
-					<section page="Pages">
+					<section path="/dashboard/pages/">
 						<h1>Pages</h1>
-						<pp-pages pages="[[pages]]" page-types="[[pageTypes]]"></pp-pages>
+						<pp-pages></pp-pages>
 					</section>
 				</iron-pages>
 				<div class="fit vertical layout end-justified" style="pointer-events: none;">
@@ -190,22 +187,6 @@
 					connected: {
 						type: Boolean,
 						observer: '_connectedChanged'
-					},
-					loginPage: {
-						type: Number,
-						value: 0
-					},
-					page: {
-						type: String
-					},
-					pageLayouts: {
-						type: Array
-					},
-					pageTypes: {
-						type: Array
-					},
-					pages: {
-						type: Array
 					},
 					path: {
 						type: String,
@@ -338,11 +319,11 @@
 					var page = 'Overview';
 
 					switch (this.path) {
-						case '/dashboard/page-layouts/':
-							page = 'Page Layouts';
+						case '/dashboard/layouts/':
+							page = 'Layouts';
 							break;
-						case '/dashboard/page-types/':
-							page = 'Page Types';
+						case '/dashboard/types/':
+							page = 'Types';
 							break;
 						case '/dashboard/pages/':
 							page = 'Pages';

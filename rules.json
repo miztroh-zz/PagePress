@@ -24,7 +24,8 @@
     },
     "pages": {
     	".read": true,
-    	".write": "auth != true && root.child('admins/' + auth.uid).val() == true"
+    	".write": "auth != true && root.child('admins/' + auth.uid).val() == true",
+    	".indexOn": "url"
     }
   }
 }

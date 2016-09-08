@@ -2,6 +2,7 @@
 <link rel="import" href="/bower_components/font-roboto/roboto.html">
 <link rel="import" href="/bower_components/iron-location/iron-location.html">
 <link rel="import" href="/bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="/bower_components/polymerfire/firebase-app.html">
 <link rel="import" href="/bower_components/polymerfire/firebase-document.html">
 <link rel="import" href="/bower_components/polymerfire/firebase-query.html">
 <link rel="import" href="/bower_components/iron-media-query/iron-media-query.html">
@@ -13,6 +14,13 @@
 				font-family: Roboto;
 				width: 100vw;
 				height: 100vh;
+			}
+
+			@media (max-width: 767px) {
+				#page {
+					width: 100%;
+					overflow-x: hidden;
+				}
 			}
 
 			@media (min-width: 768px) {
@@ -115,12 +123,13 @@
 			}
 		</style>
 		<firebase-app name="pp-fb" api-key="[[webSetup.apiKey]]" auth-domain="[[webSetup.authDomain]]" database-url="[[webSetup.databaseURL]]" storage-bucket="[[webSetup.storageBucket]]"></firebase-app>
-		<firebase-query app-name="pp-fb" path="/pages" id="pages" data="{{pages}}"></firebase-query>
-		<firebase-document app-name="pp-fb" path="[[pageUrl]]" data="{{page}}"></firebase-document>
+		<firebase-query app-name="pp-fb" path="/pages/custom" data="{{_page}}" order-by-child="url" equal-to="[[url]]"></firebase-query>
+		<firebase-document app-name="pp-fb" path="/pages/builtin/home" data="{{_homePage}}"></firebase-document>
+		<firebase-document app-name="pp-fb" path="/pages/builtin/error" data="{{_errorPage}}"></firebase-document>
 		<firebase-document app-name="pp-fb" path="[[typeLayoutUrl]]" data="{{layout}}"></firebase-document>
 		<firebase-query app-name="pp-fb" path="[[layoutRowsUrl]]" data="{{rows}}"></firebase-query>
 		<firebase-document app-name="pp-fb" path="[[typeBlocksUrl]]" data="{{typeBlocks}}"></firebase-document>
-		<iron-location path="{{path}}" url-space-regex="^(?!/dashboard/)"></iron-location>
+		<iron-location path="{{url}}" url-space-regex="^(?!/dashboard/)"></iron-location>
 		<iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
 		<div id="container" class="horizontal layout center-justified">
 			<div id="page" hidden$="[[!page]]">
@@ -160,16 +169,13 @@
 					webSetup: {
 						type: Object
 					},
-					path: {
+					url: {
 						type: String,
-						observer: '_pathChanged'
-					},
-					key: {
-						type: String,
-						value: null
+						observer: '_urlChanged'
 					},
 					page: {
-						type: Object
+						type: Object,
+						computed: '_computePage(_page.*, _homePage.title, _errorPage.title)'
 					},
 					typeLayoutUrl: {
 						type: String,
@@ -195,22 +201,35 @@
 					typeBlocks: {
 					  type: Array
 					},
-					pageUrl: {
-						type: String,
-						computed: '_computePageUrl(key, path)'
+					_page: {
+						type: Object
+					},
+					_homePage: {
+						type: Object
+					},
+					_errorPage: {
+						type: Object
 					}
 				},
 				ready: function () {
 					this.scopeSubtree(this.$.rows, true);
 				},
 				_computeTypeLayoutUrl: function () {
-					if (this.page && this.page.type) return '/page-types/' + this.page.type + '/layout';
+					if (this.page && this.page.type) return '/pages/types/' + this.page.type + '/layout';
 				},
 				_computeTypeBlocksUrl: function () {
-					if (this.page && this.page.type) return '/page-types/' + this.page.type + '/blocks';
+					if (this.page && this.page.type) return '/pages/types/' + this.page.type + '/blocks';
 				},
 				_computeLayoutRowsUrl: function () {
-					if (this.layout && typeof this.layout === 'string') return '/page-layouts/' + this.layout + '/rows';
+					if (this.layout && typeof this.layout === 'string') return '/pages/layouts/' + this.layout + '/rows';
+				},
+				_flipSlashes: function (str) {
+					return str.replace(new RegExp('/', 'g'), '\\');
+				},
+				_computePage: function () {
+					if (this._page && this._page[0]) return Object.assign({}, this._page[0]);
+					if (this.url === '/') return Object.assign({}, this._homePage);
+					return Object.assign({}, this._errorPage);
 				},
 				observers: [
 					'_pageTitleChanged(page.title)'
@@ -218,57 +237,21 @@
 				_equalTo: function (a, b) {
 					return a === b;
 				},
-				_pathChanged: function () {
-					if (!this.$.pages.query) return;
+				_urlChanged: function () {
+					if (!this.url) return;
 
-					//Make sure path ends in a slash
-					if (this.path.charAt(this.path.length - 1) !== '/') {
-						this.path += '/';
-						history.replaceState(null, null, this.path);
+					//Make sure url ends in a slash
+					if (this.url.charAt(this.url.length - 1) !== '/') {
+						this.url += '/';
+						history.replaceState(null, null, this.url);
 						return;
 					}
 
-					//If path is not a dashboard path, reload
-					if (this.path.substring(0, 11) === '/dashboard/') {
+					//If url is a dashboard url, reload
+					if (this.url.substring(0, 11) === '/dashboard/') {
 						window.location.reload();
 						return;
 					}
-
-					this.key = '';
-					var path = this.path.split('/'), index = -1;
-					path = path.slice(1, path.length - 1);
-
-					var findPage = function (parent, slug, callback) {
-						this.$.pages.query.orderByChild('parent').equalTo(parent).on('child_added', callback);
-					}.bind(this);
-
-					var callback = function () {
-						var firstSnapshot;
-
-						return function (snapshot) {
-							if (snapshot && !firstSnapshot) {
-								var parent = snapshot.child('parent').val(), slug = snapshot.child('slug').val(), key = snapshot.key();
-
-								if (slug === path[index + 1]) {
-									firstSnapshot = true;
-									index += 1;
-
-									if (index + 1 < path.length) {
-										findPage(key, path[index + 1], callback());
-									} else {
-										this.key = key;
-									}
-								}
-							}
-						}.bind(this);
-					}.bind(this);
-
-					findPage('', path[0], callback());
-				},
-				_computePageUrl: function () {
-					if (this.path === '/') return '/home-page';
-					if (!this.key) return '/error-page';
-					return '/pages/' + this.key;
 				},
 				_pageTitleChanged: function () {
 					document.title = (this.page && this.page.title) ? this.page.title : '404';
