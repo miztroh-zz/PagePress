@@ -1,16 +1,10 @@
 {
-	"hosting" : {
-	  "public": ".",
-		"ignore": [
-			"rules.json",
-			"firebase-debug.log",
-			".bowerrc",
-			".gitignore",
-			"bower.json",
-			"**/.*",
-			"**/node_modules/**"
-		],
-		"rewrites": [
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "hosting": {
+    "public": "public",
+    "rewrites": [
 			{
 				"source": "!/dashboard/*",
 				"destination": "/index.html"
@@ -19,7 +13,6 @@
 				"source": "/dashboard/*",
 				"destination": "/dashboard/index.html"
 			}
-		]
-	},
-	"rules": "rules.json"
+    ]
+  }
 }

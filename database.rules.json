@@ -1,0 +1,23 @@
+{
+  "rules": {
+    "admins": {
+      ".read": true,
+      "$uid": {
+        ".write": "auth != null && (($uid == auth.uid && !root.child('admins').exists()) || root.child('admins/' + auth.uid).val() == true)"
+      }
+    },
+    "pages": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins/' + auth.uid).val() == true",
+      "custom": {
+      	".indexOn": "url"
+      },
+      "layouts": {
+      	".indexOn": "name"
+      },
+      "types": {
+      	".indexOn": "name"
+      }
+    }
+  }
+}
