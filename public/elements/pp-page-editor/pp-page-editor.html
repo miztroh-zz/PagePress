@@ -359,6 +359,8 @@
 										}
 
 										this.set('blocks.' + j, block);
+									} else if (this.blocks[j] !== this.typeBlocks[j].name) {
+										this.set('blocks.' + j + '.name', this.typeBlocks[j].name);
 									}
 								}
 
@@ -366,6 +368,7 @@
 							}
 						}
 
+						console.log(this.blocks);
 						this.$.changes.innerHTML = '';
 						var doc = document.createElement('firebase-document');
 						this.$.changes.appendChild(doc);

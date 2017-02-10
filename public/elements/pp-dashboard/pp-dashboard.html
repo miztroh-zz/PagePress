@@ -20,6 +20,10 @@
 <link rel="import" href="/bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="/bower_components/paper-input/paper-input.html">
 <link rel="import" href="/bower_components/gold-email-input/gold-email-input.html">
+<link rel="import" href="/bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="/bower_components/paper-menu/paper-submenu.html">
+<link rel="import" href="/bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="/bower_components/paper-collapse/paper-collapse.html">
 <link rel="import" href="/elements/pp-layouts/pp-layouts.html">
 <link rel="import" href="/elements/pp-types/pp-types.html">
 <link rel="import" href="/elements/pp-pages/pp-pages.html">
@@ -32,6 +36,7 @@
 				width: 100vw;
 				height: 100vh;
 				font-family: Roboto;
+				background: white;
 			}
 
 			iron-pages {
@@ -81,9 +86,19 @@
 				color: white;
 			}
 
+			#login-backdrop paper-spinner-lite {
+				--paper-spinner-color: white;
+			}
+
+			#login-backdrop paper-input,
+			#login-backdrop gold-email-input {
+				--paper-input-container-focus-color: #2A9AF2;
+			}
+
 			paper-tabs {
 				--paper-tabs-selection-bar-color: #2A9AF2;
 			}
+
 			paper-tab {
 				--paper-tab-ink: #2A9AF2;
 			}
@@ -99,19 +114,21 @@
 					<div class="title" style="line-height: 22px; margin-left: 0;"><strong><em>PagePress</em></strong>&nbsp;Navigation</div>
 				</paper-toolbar>
 				<div class="fit vertical layout">
-					<div id="navigation" on-tap="_closeDrawer">
-						<a href="/dashboard/">
+					<div id="navigation">
+						<a href="/dashboard/" on-tap="_closeDrawer" tabindex="-1">
 							<paper-item selected$="[[_equalTo(path, '/dashboard/')]]">Overview</paper-item>
 						</a>
-						<a href="/dashboard/layouts/">
-							<paper-item selected$="[[_equalTo(path, '/dashboard/layouts/')]]">Layouts</paper-item>
-						</a>
-						<a href="/dashboard/types/">
-							<paper-item selected$="[[_equalTo(path, '/dashboard/types/')]]">Types</paper-item>
-						</a>
-						<a href="/dashboard/pages/">
-							<paper-item selected$="[[_equalTo(path, '/dashboard/pages/')]]">Pages</paper-item>
-						</a>
+						<paper-collapse label="Pages">
+							<a href="/dashboard/pages/" on-tap="_closeDrawer" tabindex="-1">
+								<paper-item selected$="[[_equalTo(path, '/dashboard/pages/')]]" style="padding-left: 30px;">Sitemap</paper-item>
+							</a>
+							<a href="/dashboard/pages/page-layouts/" on-tap="_closeDrawer" tabindex="-1">
+								<paper-item selected$="[[_equalTo(path, '/dashboard/pages/page-layouts/')]]" style="padding-left: 30px;">Page Layouts</paper-item>
+							</a>
+							<a href="/dashboard/pages/page-types/" on-tap="_closeDrawer" tabindex="-1">
+								<paper-item selected$="[[_equalTo(path, '/dashboard/pages/page-types/')]]" style="padding-left: 30px;">Page Types</paper-item>
+							</a>
+						</paper-collapse>
 					 </div>
 					<div class="flex"></div>
 					<div class="horizontal layout">
@@ -141,17 +158,17 @@
 						<p>Take a specified type and configure it with content.  Static content may be inherited from the type.</p>
 						<div style="margin-top: 50px;">To get started, click the <iron-icon icon="menu"></iron-icon> button at the top left.</div>
 					</section>
-					<section path="/dashboard/layouts/">
-						<h1>Layouts</h1>
+					<section path="/dashboard/pages/">
+						<h1>Sitemap</h1>
+						<pp-pages></pp-pages>
+					</section>
+					<section path="/dashboard/pages/page-layouts/">
+						<h1>Page Layouts</h1>
 						<pp-layouts></pp-layouts>
 					</section>
-					<section path="/dashboard/types/">
-						<h1>Types</h1>
+					<section path="/dashboard/pages/page-types/">
+						<h1>Page Types</h1>
 						<pp-types></pp-types>
-					</section>
-					<section path="/dashboard/pages/">
-						<h1>Pages</h1>
-						<pp-pages></pp-pages>
 					</section>
 				</iron-pages>
 				<div class="fit vertical layout end-justified" style="pointer-events: none;">
@@ -160,19 +177,22 @@
 			</paper-header-panel>
 		</paper-drawer-panel>
 		<div class="fit horizontal layout center-justified" hidden$="[[user]]" id="login-backdrop">
-			<div class="self-center vertical layout">
-				<h1 style="font-weight: normal;"><strong><em>PagePress</em></strong>&nbsp;Dashboard</h1>
-				<paper-material elevation="5" style="background: white;">
-					<div style="padding: 20px;">
-						<gold-email-input label="Email address" always-float-label required auto-validate id="loginEmail"></gold-email-input>
-						<paper-input label="Password" always-float-label required type="password" id="loginPassword"></paper-input>
-						<div class="horizontal layout">
-							<paper-button on-tap="login" id="loginButton">Log In</paper-button>
-							<div class="flex"></div>
-							<paper-button on-tap="register" id="registerButton">Register</paper-button>
+			<div class="self-center">
+				<paper-spinner-lite active hidden$="[[!_loading(user)]]"></paper-spinner-lite>
+				<div class="vertical layout" hidden$="[[_loading(user)]]">
+					<h1 style="font-weight: normal;"><strong><em>PagePress</em></strong>&nbsp;Dashboard</h1>
+					<paper-material elevation="5" style="background: white;">
+						<div style="padding: 20px;">
+							<gold-email-input label="Email address" always-float-label required auto-validate id="loginEmail"></gold-email-input>
+							<paper-input label="Password" always-float-label required type="password" id="loginPassword"></paper-input>
+							<div class="horizontal layout">
+								<paper-button on-tap="login" id="loginButton">Log In</paper-button>
+								<div class="flex"></div>
+								<paper-button on-tap="register" id="registerButton">Register</paper-button>
+							</div>
 						</div>
-					</div>
-				</paper-material>
+					</paper-material>
+				</div>
 			</div>
 			<paper-toast id="loginToast" style="pointer-events: all;" class="self-start"></paper-toast>
 		</div>
@@ -194,7 +214,8 @@
 						observer: '_pathChanged'
 					},
 					user: {
-						type: Object
+						type: Object,
+						value: false
 					},
 					webSetup: {
 						type: Object
@@ -320,14 +341,18 @@
 					var page = 'Overview';
 
 					switch (this.path) {
-						case '/dashboard/layouts/':
-							page = 'Layouts';
-							break;
-						case '/dashboard/types/':
-							page = 'Types';
-							break;
 						case '/dashboard/pages/':
-							page = 'Pages';
+							page = 'Sitemap';
+							break;
+						case '/dashboard/pages/page-layouts/':
+							page = 'Page Layouts';
+							break;
+						case '/dashboard/pages/page-types/':
+							page = 'Page Types';
+							break;
+						default:
+							this.path = '/dashboard/';
+							return;
 							break;
 					}
 
@@ -344,6 +369,12 @@
 					}
 
 					this.$.toast.open();
+				},
+				_loading: function (user) {
+					var loading = false;
+					if (user === false) loading = true;
+					console.log(user, loading);
+					return loading;
 				}
 			}
 		);

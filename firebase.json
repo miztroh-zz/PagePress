@@ -6,11 +6,11 @@
     "public": "public",
     "rewrites": [
 			{
-				"source": "!/dashboard/*",
+				"source": "!/dashboard/**",
 				"destination": "/index.html"
 			},
 			{
-				"source": "/dashboard/*",
+				"source": "/dashboard/**",
 				"destination": "/dashboard/index.html"
 			}
     ]

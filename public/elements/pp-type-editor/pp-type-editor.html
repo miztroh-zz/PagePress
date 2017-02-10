@@ -98,7 +98,6 @@
 			}
 		</style>
     <iron-media-query query="(min-width: 768px)" query-matches="{{minWidth768px}}"></iron-media-query>
-		<firebase-query app-name="pp-fb" path="[[url]]" data="{{rows}}"></firebase-query>
 		<div id="rows">
 			<template is="dom-repeat" items="[[rows]]" as="row" index-as="rowIndex">
 				<div class$="row [[_justification(row.justification, minWidth768px)]]">
@@ -129,14 +128,6 @@
 					PagePress.BlockTypesBehavior
 				],
 				properties: {
-					layout: {
-						type: String,
-						observer: '_layoutChanged'
-					},
-					url: {
-						type: String,
-						computed: '_computeUrl(layout)'
-					},
 					rows: {
 						type: Object,
 						observer: '_rowsChanged'
@@ -152,9 +143,6 @@
 					activeBlockIndex: {
 						type: Number
 					}
-				},
-				_computeUrl: function () {
-					if (this.layout && typeof this.layout === 'string') return '/page-layouts/' + this.layout + '/rows';
 				},
 				_justification: function (justification) {
 				  if (!this.minWidth768px) return '';

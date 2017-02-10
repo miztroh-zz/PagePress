@@ -139,19 +139,19 @@
 						<div class$="row [[_justification(row.justification, minWidth768px)]]">
 							<template is="dom-repeat" items="[[row.columns]]" as="column" index-as="columnIndex">
 								<div class="column" column-width$="[[column.width]]">
-									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'dynamic')]]">
-										<div inner-h-t-m-l="[[_blockHTML(rowIndex, columnIndex, page.*)]]"></div>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'dynamic', page.*, typeBlocks.*)]]">
+										<div inner-h-t-m-l="[[_blockHTML(rowIndex, columnIndex, page.*, typeBlocks.*)]]"></div>
 									</template>
-									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'static')]]">
-										<div inner-h-t-m-l="[[_blockStaticHTML(rowIndex, columnIndex, typeBlocks.*)]]"></div>
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'static', page.*, typeBlocks.*)]]">
+										<div inner-h-t-m-l="[[_blockStaticHTML(rowIndex, columnIndex, page.*, typeBlocks.*)]]"></div>
 									</template>
-									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-left')]]">
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-left', page.*, typeBlocks.*)]]">
 										<h1>[[page.title]]</h1>
 									</template>
-									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-center')]]">
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-center', page.*, typeBlocks.*)]]">
 										<h1 style="text-align: center;">[[page.title]]</h1>
 									</template>
-									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-right')]]">
+									<template is="dom-if" if="[[_blockIs(rowIndex, columnIndex, 'page-title-right', page.*, typeBlocks.*)]]">
 										<h1 style="text-align: right;">[[page.title]]</h1>
 									</template>
 								</div>

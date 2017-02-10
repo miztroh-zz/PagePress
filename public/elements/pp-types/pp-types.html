@@ -88,7 +88,8 @@
         		type: Array
         	},
         	layout: {
-        		type: String
+        		type: String,
+        		observer: '_layoutChanged'
         	},
         	blocks: {
         		type: Array,
@@ -158,10 +159,20 @@
         _computeType: function () {
         	return this.types[this.index];
         },
+        _layoutChanged: function () {
+					for (var j = 0; j < this.layouts.length; j += 1) {
+						if (this.layouts[j].$key === this.layout) this.$.editor.rows = this.layouts[j].rows;
+					}
+        },
         _typeChanged: function () {
 					if (this.type) {
 						this.$.name.value = this.type.name;
 						this.$.layoutList.selected = this.type.layout;
+
+						for (var j = 0; j < this.layouts.length; j += 1) {
+							if (this.layouts[j].$key === this.type.layout) this.$.editor.rows = this.layouts[j].rows;
+						}
+
 						var blocks = [], indexes = Object.keys(this.type.blocks || []);
 
 						for (var i = 0; i < indexes.length; i += 1) {
